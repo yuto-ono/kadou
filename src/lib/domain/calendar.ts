@@ -73,12 +73,30 @@ export function emptyDay(date: DateString): DayRecord {
 	};
 }
 
+/**
+ * 契約条件のスナップショット（SPEC.md §4.4）。
+ *
+ * フィールドを明示して写す。スプレッドで複製すると、Contract を渡したときに
+ * maxEndTime が月へ紛れ込む。maxEndTime は新規入力の検証にのみ作用し、記録済み
+ * のデータや出力には影響しないため、スナップショットに含めない。
+ */
+export function toSnapshot(contract: ContractSnapshot): ContractSnapshot {
+	return {
+		workerName: contract.workerName,
+		projectName: contract.projectName,
+		clientName: contract.clientName,
+		lowerHours: contract.lowerHours,
+		upperHours: contract.upperHours,
+		dailyHours: contract.dailyHours
+	};
+}
+
 /** 月の骨組み。1 日〜末日までの全日分を持つ（SPEC.md §4.4） */
 export function emptyMonth(month: MonthString, contract: ContractSnapshot): MonthData {
 	return {
 		month,
 		days: datesOfMonth(month).map(emptyDay),
-		contract: { ...contract },
+		contract: toSnapshot(contract),
 		remarks: ''
 	};
 }

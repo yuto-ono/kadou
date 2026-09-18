@@ -1,0 +1,12 @@
+%YAML 1.1
+---
+month: 2026-09
+contract:
+  workerName: 山田 太郎
+  projectName: 案件
+  clientName: 客先
+days:
+  - date: 2026-09-01
+    dayType: work
+    startTime: 12:00
+    endTime: 21:30

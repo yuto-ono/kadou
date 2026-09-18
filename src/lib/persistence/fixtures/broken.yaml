@@ -1,0 +1,11 @@
+month: "2026-09"
+days:
+  - date: "2026-09-01"
+    dayType: work
+  - date: "2026-09-01"
+    dayType: holiday
+  - date: "2026-10-05"
+    dayType: work
+  - date: "2026-09-03"
+    dayType: なんとか
+    startTime: 朝

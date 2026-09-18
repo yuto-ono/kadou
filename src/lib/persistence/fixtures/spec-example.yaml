@@ -1,0 +1,25 @@
+month: "2026-09"
+contract:
+  workerName: 山田 太郎
+  projectName: 勤怠管理システム開発
+  clientName: 株式会社サンプル
+  lowerHours: 140
+  upperHours: 180
+  dailyHours: 8
+remarks: |
+  祝日が重なり、想定稼働が精算幅の下限を下回っています。
+days:
+  - date: "2026-09-01"
+    dayType: work
+    startTime: "09:30"
+    endTime: "19:00"
+    breaks:
+      - start: "12:00"
+        end: "13:00"
+    workContent: 認証基盤のリファクタリング
+    journal: |
+      レビュー指摘の対応。
+      - トークン検証の順序を入れ替え
+      - 移行手順は次週あらためて相談
+  - date: "2026-09-06"
+    dayType: weekend
