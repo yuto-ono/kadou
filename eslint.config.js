@@ -74,9 +74,11 @@ export default ts.config(
 		}
 	},
 	{
+		// svelte-eslint-parser が担当するファイル。script の中身は TypeScript なので、
+		// 委譲先のパーサを明示する必要がある
 		files: ['**/*.svelte', '**/*.svelte.ts'],
 		languageOptions: {
-			parserOptions: { projectService: true, extraFileExtensions: ['.svelte'], svelteConfig }
+			parserOptions: { parser: ts.parser, extraFileExtensions: ['.svelte'], svelteConfig }
 		}
 	},
 	...layerBoundaries,

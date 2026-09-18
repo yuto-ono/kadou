@@ -1,0 +1,61 @@
+import type { Contract, MonthData } from '$lib/domain/types';
+import type { Issue } from '$lib/domain/validate/issue';
+
+/** API クライアント（SPEC.md §4.5）。ワイヤは JSON */
+
+export class ApiError extends Error {
+	constructor(
+		readonly status: number,
+		message: string
+	) {
+		super(message);
+	}
+}
+
+/** ファイルが存在しない。呼び出し側は「未作成」として扱う */
+export class NotFoundError extends ApiError {}
+
+/**
+ * SvelteKit の load から呼ぶときは、その load が受け取った fetch を渡す。
+ * 素の window.fetch だと SvelteKit の追跡から外れる。
+ */
+export type Fetch = typeof globalThis.fetch;
+
+async function request(path: string, init?: RequestInit, fetchFn: Fetch = fetch): Promise<Response> {
+	const res = await fetchFn(path, init);
+	if (res.ok) return res;
+
+	const message = await res
+		.json()
+		.then((b: { message?: string }) => b.message ?? res.statusText)
+		.catch(() => res.statusText);
+
+	throw res.status === 404 ? new NotFoundError(404, message) : new ApiError(res.status, message);
+}
+
+export async function fetchMonths(fetchFn?: Fetch): Promise<string[]> {
+	const res = await request('/api/months', undefined, fetchFn);
+	return ((await res.json()) as { months: string[] }).months;
+}
+
+export async function fetchMonth(month: string): Promise<{ data: MonthData; issues: Issue[] }> {
+	const res = await request(`/api/months/${month}`);
+	return (await res.json()) as { data: MonthData; issues: Issue[] };
+}
+
+export async function saveMonth(month: string, data: MonthData): Promise<void> {
+	await request(`/api/months/${month}`, {
+		method: 'PUT',
+		headers: { 'content-type': 'application/json' },
+		body: JSON.stringify(data)
+	});
+}
+
+export async function removeMonth(month: string): Promise<void> {
+	await request(`/api/months/${month}`, { method: 'DELETE' });
+}
+
+export async function fetchContract(): Promise<Contract> {
+	const res = await request('/api/contract');
+	return ((await res.json()) as { data: Contract }).data;
+}
