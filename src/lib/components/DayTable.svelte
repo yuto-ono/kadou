@@ -53,12 +53,8 @@
 
 <style>
 	table {
-		/*
-		 * 上限を設ける。作業内容は 30 文字までなので（SPEC.md §4.2）、残り全部を
-		 * 与えると広い画面でこの列だけが伸び、左側の数値が痩せて見える。
-		 */
+		/* 作業内容が残り全部を取る。表を途中で切ると右側に空白が残って収まりが悪い */
 		width: 100%;
-		max-width: 62rem;
 		border-collapse: collapse;
 		background: var(--surface);
 	}
