@@ -1,0 +1,7 @@
+# 契約設定。このファイルはアプリから書き換えません
+workerName: 山田 太郎          # 氏名・屋号
+clientName: 株式会社サンプル
+lowerHours: 140               # 精算幅の下限
+upperHours: 180               # 精算幅の上限
+dailyHours: 8                 # 1 日の想定稼働時間
+maxEndTime: "28:00"           # 終了時刻の上限（24:00〜47:59）

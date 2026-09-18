@@ -21,3 +21,8 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# 作業記録。別リポジトリで管理する（SPEC.md §4.5）。
+# KADOU_DATA_DIR 未指定でここに書き出された場合の保険
+/contract.yaml
+/months/
