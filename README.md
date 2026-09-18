@@ -11,6 +11,7 @@
 
 ```sh
 pnpm install
+cp .env.example .env    # KADOU_DATA_DIR を作業記録の場所に書き換える
 pnpm dev
 ```
 
@@ -33,11 +34,13 @@ months/
   2026-09.yaml    月次データ
 ```
 
+`.env` は `pnpm dev` と `pnpm start` のどちらも読む。起動のたびに指定せずに済ませるため。一時的に別の場所を見たいときは、環境変数のほうが `.env` より優先される。
+
 ```sh
-KADOU_DATA_DIR=../kadou-data pnpm dev
+KADOU_DATA_DIR=/tmp/kadou-trial pnpm dev
 ```
 
-未指定の場合はカレントディレクトリを見る。その状態で記録するとソースの隣に書き出されるが、`.gitignore` で追跡対象から外してある。
+未指定ならカレントディレクトリを見る。その状態で記録するとソースの隣に書き出されるが、`contract.yaml` と `months/` は `.gitignore` で追跡対象から外してある。
 
 `contract.yaml` はアプリから書き込まない。存在しない場合は雛形を画面に表示するので、内容を確認して自分で作成する。記入例は [contract.example.yaml](contract.example.yaml) にある。
 
