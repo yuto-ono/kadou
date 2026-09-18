@@ -11,10 +11,12 @@
 		value: string | null;
 		invalid?: boolean;
 		label: string;
+		/** 一覧では枠線をホバーまで隠す。詳細パネルでは常に見せる */
+		quiet?: boolean;
 		onCommit: (value: string | null) => void;
 	}
 
-	let { value, invalid = false, label, onCommit }: Props = $props();
+	let { value, invalid = false, label, quiet = true, onCommit }: Props = $props();
 
 	/** 編集中の下書き。null は「編集していない」で、表示は value に従う */
 	let draft = $state<string | null>(null);
@@ -45,6 +47,7 @@
 
 <input
 	class="time"
+	class:quiet-field={quiet}
 	class:field-error={hasError}
 	aria-label={label}
 	aria-invalid={hasError}
@@ -57,8 +60,13 @@
 
 <style>
 	.time {
-		width: 4.5rem;
+		width: 4.2rem;
+		padding: 0.1rem 0.2rem;
 		text-align: center;
 		font-variant-numeric: tabular-nums;
+	}
+
+	.time::placeholder {
+		color: var(--fg-subtle);
 	}
 </style>

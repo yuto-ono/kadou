@@ -64,7 +64,12 @@
 	}
 </script>
 
-<svelte:window onbeforeunload={() => void store?.flush()} />
+<svelte:window
+	onbeforeunload={() => void store?.flush()}
+	onkeydown={(e) => {
+		if (e.key === 'Escape' && store?.selectedDate) closePanel();
+	}}
+/>
 
 <div class="page">
 	<header class="bar">
@@ -120,19 +125,22 @@
 
 		<MonthSummary summary={store.summary} contract={store.data.contract} />
 
+		<details class="remarks">
+			<summary>
+				特記事項
+				<span class="preview">{store.data.remarks || '報告書のフッタに出力されます'}</span>
+			</summary>
+			<!-- 開いている間は要約行の重複を消す -->
+			<textarea
+				value={store.data.remarks}
+				placeholder="下限割れや超過の理由など、客先へ説明することがあれば書く"
+				oninput={(e) => store?.setRemarks(e.currentTarget.value)}
+			></textarea>
+		</details>
+
 		<div class="body">
 			<div class="list">
-				<DayTable
-					{store}
-					onConfirmClear={(date, next) => (pendingChange = { date, next })}
-				/>
-				<label class="remarks">
-					<span>特記事項 <small>報告書のフッタに出力されます</small></span>
-					<textarea
-						value={store.data.remarks}
-						oninput={(e) => store?.setRemarks(e.currentTarget.value)}
-					></textarea>
-				</label>
+				<DayTable {store} onConfirmClear={(date, next) => (pendingChange = { date, next })} />
 			</div>
 
 			{#if store.selectedDay}
@@ -180,14 +188,16 @@
 		display: flex;
 		flex-direction: column;
 		height: 100vh;
+		background: var(--bg-app);
 	}
 
 	.bar {
 		display: flex;
 		align-items: center;
 		gap: 0.6rem;
-		padding: 0.5rem 1rem;
-		border-bottom: 1px solid var(--border);
+		padding: 0.5rem 1.25rem;
+		border-bottom: 1px solid var(--line);
+		background: var(--surface);
 	}
 
 	.spacer {
@@ -195,8 +205,46 @@
 	}
 
 	.unsaved {
-		color: var(--muted);
+		color: var(--fg-subtle);
+		font-size: 0.75rem;
+	}
+
+	/* 月に一度しか書かない欄。開いたままにはせず、要るときだけ広げる */
+	.remarks {
+		border-bottom: 1px solid var(--line);
+		background: var(--surface);
 		font-size: 0.8rem;
+	}
+
+	.remarks summary {
+		display: flex;
+		gap: 0.6rem;
+		padding: 0.35rem 1.25rem;
+		color: var(--fg-muted);
+		cursor: pointer;
+	}
+
+	.remarks summary:hover {
+		background: var(--accent-tint);
+	}
+
+	.preview {
+		overflow: hidden;
+		color: var(--fg-subtle);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.remarks[open] .preview {
+		display: none;
+	}
+
+	.remarks textarea {
+		display: block;
+		width: calc(100% - 2.5rem);
+		min-height: 3.5rem;
+		margin: 0 1.25rem 0.6rem;
+		resize: vertical;
 	}
 
 	.body {
@@ -211,48 +259,40 @@
 		flex-direction: column;
 		min-width: 0;
 		overflow-y: auto;
+		background: var(--surface);
 	}
 
 	.notice {
-		padding: 0.75rem 1rem;
+		max-width: 46rem;
+		margin: 1.25rem;
+		padding: 1rem 1.25rem;
+		border: 1px solid var(--line);
+		border-radius: 8px;
+		background: var(--surface);
+	}
+
+	.notice p {
+		margin: 0 0 0.6rem;
 	}
 
 	.notice.error {
+		border-color: var(--error);
 		color: var(--error);
 	}
 
 	.hint {
-		color: var(--muted);
+		margin: 0.6rem 0 0;
+		color: var(--fg-muted);
 		font-size: 0.85rem;
 	}
 
 	pre {
-		padding: 0.75rem;
+		margin: 0.6rem 0 0;
+		padding: 0.8rem 1rem;
 		overflow-x: auto;
-		border: 1px solid var(--border);
-		border-radius: 4px;
-		background: var(--row-weekend);
-		font-size: 0.8rem;
-	}
-
-	.remarks {
-		display: flex;
-		flex-direction: column;
-		gap: 0.2rem;
-		padding: 0.75rem 1rem;
-	}
-
-	.remarks > span {
-		color: var(--muted);
-		font-size: 0.8rem;
-	}
-
-	.remarks textarea {
-		min-height: 4rem;
-		resize: vertical;
-	}
-
-	small {
-		font-size: 0.75rem;
+		border-radius: 6px;
+		background: var(--surface-sunken);
+		font-size: 0.78rem;
+		line-height: 1.6;
 	}
 </style>

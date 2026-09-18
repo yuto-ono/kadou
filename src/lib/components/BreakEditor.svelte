@@ -49,13 +49,15 @@
 		<div class="row">
 			<TimeCell
 				value={brk.start}
+				quiet={false}
 				invalid={issueAt(index).length > 0}
 				label="休憩 {index + 1} の開始"
 				onCommit={(v) => v !== null && update(index, { start: v })}
 			/>
-			<span aria-hidden="true">〜</span>
+			<span class="sep" aria-hidden="true">〜</span>
 			<TimeCell
 				value={brk.end}
+				quiet={false}
 				invalid={issueAt(index).length > 0}
 				label="休憩 {index + 1} の終了"
 				onCommit={(v) => v !== null && update(index, { end: v })}
@@ -69,7 +71,7 @@
 		{/if}
 	{/each}
 
-	<button onclick={add} disabled={!enabled}>休憩を追加</button>
+	<button class="add" onclick={add} disabled={!enabled}>休憩を追加</button>
 
 	{#if !enabled && day.breaks.length === 0}
 		<p class="hint">開始時刻と終了時刻を入力すると追加できます</p>
@@ -83,39 +85,65 @@
 </div>
 
 <style>
+	.breaks {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		align-items: flex-start;
+	}
+
 	.head {
 		display: flex;
 		align-items: baseline;
 		justify-content: space-between;
+		width: 100%;
 	}
 
 	h3 {
 		margin: 0;
-		font-size: 0.85rem;
-		font-weight: 600;
+		color: var(--fg-muted);
+		font-size: 0.72rem;
+		font-weight: 500;
+		letter-spacing: 0.03em;
 	}
 
 	.total {
-		color: var(--muted);
-		font-size: 0.8rem;
+		color: var(--fg-muted);
+		font-size: 0.78rem;
 		font-variant-numeric: tabular-nums;
 	}
 
 	.row {
 		display: flex;
 		align-items: center;
-		gap: 0.3rem;
-		margin: 0.3rem 0;
+		gap: 0.35rem;
+		margin: 0.15rem 0;
+	}
+
+	.sep {
+		color: var(--fg-subtle);
 	}
 
 	.row button {
 		padding: 0.05rem 0.4rem;
-		font-size: 0.75rem;
+		border-color: transparent;
+		color: var(--fg-subtle);
+		font-size: 0.72rem;
+	}
+
+	.row:hover button {
+		border-color: var(--line-strong);
+	}
+
+	.add {
+		margin-top: 0.15rem;
+		padding: 0.1rem 0.5rem;
+		font-size: 0.78rem;
 	}
 
 	.hint {
-		margin: 0.3rem 0 0;
-		color: var(--muted);
-		font-size: 0.8rem;
+		margin: 0.2rem 0 0;
+		color: var(--fg-subtle);
+		font-size: 0.75rem;
 	}
 </style>

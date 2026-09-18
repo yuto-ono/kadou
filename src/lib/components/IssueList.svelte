@@ -23,15 +23,15 @@
 
 <style>
 	.banner {
-		padding: 0.5rem 1rem;
-		border-bottom: 1px solid var(--error);
-		background: var(--error-bg);
+		padding: 0.5rem 1.25rem;
+		border-bottom: 1px solid var(--line);
+		background: var(--error-soft);
 		color: var(--error);
-		font-size: 0.85rem;
+		font-size: 0.8rem;
 	}
 
 	ul {
-		margin: 0.2rem 0 0;
-		padding-left: 1.2rem;
+		margin: 0.15rem 0 0;
+		padding-left: 1.1rem;
 	}
 </style>

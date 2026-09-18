@@ -1,17 +1,55 @@
-/* 画面のスタイル。報告書の印刷レイアウトは print.css が持つ */
+/*
+ * 画面のスタイル。報告書の印刷レイアウトは print.css が持つ。
+ *
+ * 配色の方針:
+ *   - 地は温かみのあるオフホワイト、データ面は白。層を 2 枚に分けて、入力する
+ *     場所とそれ以外を地色で分ける
+ *   - アクセントは 1 色（ティール）。フォーカス・選択行・精算幅の帯に使う
+ *   - 区分ごとの色は行の背景ではなくチップに載せる。30 行に色を塗ると表が騒がしく
+ *     なるうえ、稼働した日が沈む
+ *   - ダークモードは持たない。報告書は白地で出すものなので、二重に持つ割に使い所
+ *     が画面の半分しかない
+ */
 
 :root {
-	--bg: #ffffff;
-	--fg: #1a1a1a;
-	--muted: #6b7280;
-	--border: #d4d4d8;
-	--border-strong: #a1a1aa;
-	--row-weekend: #f4f4f5;
-	--row-selected: #e0f2fe;
-	--accent: #0369a1;
-	--error: #b91c1c;
-	--error-bg: #fef2f2;
-	--panel-width: 22rem;
+	/* 面 */
+	--bg-app: #f6f5f2;
+	--surface: #ffffff;
+	--surface-sunken: #faf9f7;
+
+	/* 文字 */
+	/*
+	 * 薄い側の 2 段は、白地で 4.5:1 を超える値に留めてある。表の見出し・曜日・
+	 * 休憩合計はいずれも読ませたい情報で、装飾ではない。
+	 */
+	--fg: #1c1a17;
+	--fg-muted: #6b645e;
+	--fg-subtle: #736c66;
+
+	/* 罫線 */
+	--line: #ebe8e4;
+	--line-strong: #d9d5d0;
+
+	/* アクセント */
+	--accent: #0d6e6e;
+	--accent-strong: #0a5252;
+	--accent-soft: #e2f0ef;
+	--accent-tint: #f1f8f7;
+	/* 選択行は文字が乗る。accent-soft のままだと薄い文字が 4.5 を割る */
+	--row-selected: #eaf5f4;
+
+	/* 状態 */
+	--error: #b4342a;
+	--error-soft: #fdf3f2;
+
+	/* 区分のチップ（SPEC.md §4.2。祝日と私用休を後から区別するため） */
+	--type-weekend: #a8a29e;
+	--type-holiday: #b45309;
+	--type-personal: #7c5cbf;
+	--type-client-closed: #2563a8;
+
+	--panel-width: 23rem;
+	--row-height: 1.95rem;
 
 	color-scheme: light;
 }
@@ -20,62 +58,140 @@
 	box-sizing: border-box;
 }
 
+html,
 body {
-	margin: 0;
-	background: var(--bg);
-	color: var(--fg);
-	font-family:
-		'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
-	font-size: 14px;
-	line-height: 1.5;
+	height: 100%;
 }
 
+body {
+	margin: 0;
+	background: var(--bg-app);
+	color: var(--fg);
+	font-family: 'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+	font-size: 13px;
+	font-feature-settings: 'palt' 1;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+/* 数字は必ず等幅にする。時刻の桁が揃わないと表として読めない */
+.tnum {
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- 操作部品 --- */
+
 button {
+	padding: 0.25rem 0.7rem;
+	border: 1px solid var(--line-strong);
+	border-radius: 5px;
+	background: var(--surface);
+	color: var(--fg);
 	font: inherit;
-	padding: 0.25rem 0.75rem;
-	border: 1px solid var(--border-strong);
-	border-radius: 4px;
-	background: #fff;
 	cursor: pointer;
+	transition: background-color 0.1s, border-color 0.1s;
 }
 
 button:hover:not(:disabled) {
-	background: var(--row-weekend);
+	border-color: var(--fg-subtle);
+	background: var(--surface-sunken);
 }
 
 button:disabled {
-	color: var(--muted);
+	color: var(--fg-subtle);
 	cursor: not-allowed;
+}
+
+button.primary {
+	border-color: var(--accent);
+	background: var(--accent);
+	color: #fff;
+}
+
+button.primary:hover:not(:disabled) {
+	border-color: var(--accent-strong);
+	background: var(--accent-strong);
 }
 
 input,
 select,
 textarea {
-	font: inherit;
-	padding: 0.15rem 0.3rem;
-	border: 1px solid var(--border);
-	border-radius: 3px;
-	background: #fff;
+	border: 1px solid var(--line-strong);
+	border-radius: 5px;
+	background: var(--surface);
 	color: inherit;
+	font: inherit;
+	padding: 0.2rem 0.4rem;
 }
 
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-button:focus-visible {
+textarea {
+	line-height: 1.6;
+}
+
+:focus-visible {
 	outline: 2px solid var(--accent);
 	outline-offset: 1px;
 }
 
-.field-error {
+a {
+	color: var(--accent);
+	text-underline-offset: 2px;
+}
+
+/*
+ * 一覧の中の入力欄は、枠線をホバーとフォーカスまで隠す。
+ *
+ * 30 行ぶんの枠線が常時見えていると方眼紙に見え、どこに何を打つかという手がかり
+ * として機能しなくなる。値そのものを読ませたい。
+ */
+.quiet-field {
+	border-color: transparent;
+	background: transparent;
+}
+
+.quiet-field:hover,
+.quiet-field:focus {
+	border-color: var(--line-strong);
+	background: var(--surface);
+}
+
+/*
+ * セレクトは矢印も隠す。30 行ぶんの ▾ が画面で最も目立つ要素になるが、区分は
+ * 大半の日で触らない操作なので、目立ち方と使用頻度が逆転していた。
+ */
+select.quiet-field {
+	appearance: none;
+	padding-right: 0.4rem;
+}
+
+select.quiet-field:hover,
+select.quiet-field:focus {
+	appearance: auto;
+	padding-right: 0.2rem;
+}
+
+/* --- 状態表示 --- */
+
+.field-error,
+.field-error:hover {
 	border-color: var(--error);
-	background: var(--error-bg);
+	background: var(--error-soft);
 }
 
 .issues {
-	margin: 0;
+	margin: 0.25rem 0 0;
 	padding: 0;
 	list-style: none;
 	color: var(--error);
 	font-size: 0.85em;
+	line-height: 1.45;
+}
+
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
 }

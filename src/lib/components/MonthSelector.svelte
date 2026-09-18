@@ -56,6 +56,20 @@
 	}
 
 	select {
+		padding: 0.2rem 0.4rem;
+		font-size: 0.95rem;
 		font-variant-numeric: tabular-nums;
+		font-weight: 600;
+	}
+
+	button {
+		padding: 0.2rem 0.55rem;
+		border-color: transparent;
+		color: var(--fg-muted);
+		font-size: 0.78rem;
+	}
+
+	button:hover {
+		border-color: var(--line-strong);
 	}
 </style>

@@ -28,10 +28,12 @@
 
 <style>
 	dialog {
-		max-width: 24rem;
-		padding: 1rem 1.25rem;
-		border: 1px solid var(--border-strong);
-		border-radius: 6px;
+		max-width: 25rem;
+		padding: 1.1rem 1.3rem;
+		border: none;
+		border-radius: 10px;
+		background: var(--surface);
+		box-shadow: 0 10px 40px rgb(0 0 0 / 0.18);
 		color: inherit;
 	}
 
@@ -41,7 +43,12 @@
 
 	h2 {
 		margin: 0 0 0.5rem;
-		font-size: 1rem;
+		font-size: 1.02rem;
+		font-weight: 650;
+	}
+
+	p {
+		color: var(--fg-muted);
 	}
 
 	p {
@@ -54,13 +61,5 @@
 		gap: 0.5rem;
 	}
 
-	.primary {
-		border-color: var(--accent);
-		background: var(--accent);
-		color: #fff;
-	}
 
-	.primary:hover {
-		background: #075985;
-	}
 </style>

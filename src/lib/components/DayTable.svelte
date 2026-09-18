@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { today } from '$lib/client/clock';
 	import type { DayType } from '$lib/domain/types';
 	import type { MonthStore } from '$lib/state/month.svelte';
 	import DayRow from './DayRow.svelte';
@@ -11,6 +12,8 @@
 	}
 
 	let { store, onConfirmClear }: Props = $props();
+
+	const todayDate = today();
 
 	function changeDayType(date: string, next: DayType) {
 		if (store.needsClearConfirm(date, next)) onConfirmClear(date, next);
@@ -37,6 +40,7 @@
 				{day}
 				issues={store.dayIssues[day.date] ?? []}
 				selected={store.selectedDate === day.date}
+				isToday={day.date === todayDate}
 				canCopyPrevious={store.previousWorkday(day.date) !== null}
 				onSelect={() => (store.selectedDate = day.date)}
 				onChangeDayType={(next) => changeDayType(day.date, next)}
@@ -51,17 +55,21 @@
 	table {
 		width: 100%;
 		border-collapse: collapse;
+		background: var(--surface);
 	}
 
 	thead th {
 		position: sticky;
 		top: 0;
-		padding: 0.3rem 4px;
-		border-bottom: 2px solid var(--border-strong);
-		background: var(--bg);
-		color: var(--muted);
-		font-size: 0.8rem;
+		z-index: 1;
+		height: 1.8rem;
+		padding: 0 0.3rem;
+		border-bottom: 1px solid var(--line-strong);
+		background: var(--surface);
+		color: var(--fg-subtle);
+		font-size: 0.72rem;
 		font-weight: 500;
+		letter-spacing: 0.04em;
 		white-space: nowrap;
 		text-align: left;
 	}
@@ -72,13 +80,7 @@
 
 	th.content {
 		width: 100%;
-	}
-
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
+		padding-left: 0.85rem;
+		border-left: 1px solid var(--line);
 	}
 </style>
