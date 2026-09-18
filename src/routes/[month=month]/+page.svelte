@@ -64,6 +64,11 @@
 	}
 </script>
 
+<svelte:head>
+	<!-- 月をブックマークする前提（SPEC.md §6）。対象の月を先頭に置く -->
+	<title>{data.month} 稼働時間記録</title>
+</svelte:head>
+
 <svelte:window
 	onbeforeunload={() => void store?.flush()}
 	onkeydown={(e) => {

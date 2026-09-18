@@ -24,6 +24,11 @@
 	});
 </script>
 
+<svelte:head>
+	<!-- ブラウザの「PDF として保存」は、この文字列を既定のファイル名に使う -->
+	<title>作業報告書 {data.month}</title>
+</svelte:head>
+
 <nav class="no-print">
 	<a href={resolve('/[month=month]', { month: data.month })}>← 稼働入力へ戻る</a>
 	<button onclick={() => window.print()}>印刷 / PDF として保存</button>

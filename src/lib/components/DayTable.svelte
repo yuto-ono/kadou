@@ -53,7 +53,12 @@
 
 <style>
 	table {
+		/*
+		 * 上限を設ける。作業内容は 30 文字までなので（SPEC.md §4.2）、残り全部を
+		 * 与えると広い画面でこの列だけが伸び、左側の数値が痩せて見える。
+		 */
 		width: 100%;
+		max-width: 62rem;
 		border-collapse: collapse;
 		background: var(--surface);
 	}
@@ -62,8 +67,8 @@
 		position: sticky;
 		top: 0;
 		z-index: 1;
-		height: 1.8rem;
-		padding: 0 0.3rem;
+		height: 2rem;
+		padding: 0 0.55rem;
 		border-bottom: 1px solid var(--line-strong);
 		background: var(--surface);
 		color: var(--fg-subtle);
@@ -80,7 +85,7 @@
 
 	th.content {
 		width: 100%;
-		padding-left: 0.85rem;
+		padding-left: 1.2rem;
 		border-left: 1px solid var(--line);
 	}
 </style>

@@ -138,7 +138,7 @@
 	}
 
 	td {
-		padding: 0 0.3rem;
+		padding: 0 0.55rem;
 		border-bottom: 1px solid var(--line);
 		white-space: nowrap;
 	}
@@ -160,7 +160,8 @@
 
 	.date {
 		position: relative;
-		width: 2.4rem;
+		width: 3rem;
+		padding-right: 0.2rem;
 		color: var(--fg-muted);
 		text-align: right;
 	}
@@ -171,13 +172,14 @@
 	}
 
 	.weekday {
-		width: 1.6rem;
+		width: 2.2rem;
+		padding-left: 0.2rem;
 		color: var(--fg-subtle);
 		text-align: center;
 	}
 
 	.type {
-		width: 5.6rem;
+		width: 6.6rem;
 	}
 
 	/* 区分の色。行全体を塗ると 30 行が騒がしくなるので、点で示す（SPEC.md §4.2） */
@@ -208,7 +210,7 @@
 	}
 
 	.type select {
-		width: 4.6rem;
+		width: 5.4rem;
 		padding-left: 0.2rem;
 		color: var(--fg-muted);
 	}
@@ -218,7 +220,7 @@
 	}
 
 	.num {
-		width: 3.6rem;
+		width: 4.4rem;
 		text-align: right;
 	}
 
@@ -227,14 +229,14 @@
 	}
 
 	.worked {
-		padding-right: 0.8rem;
+		padding-right: 1rem;
 		font-weight: 600;
 	}
 
 	.content {
 		width: 100%;
 		max-width: 0;
-		padding-left: 0.5rem;
+		padding-left: 0.9rem;
 		border-left: 1px solid var(--line);
 	}
 
@@ -273,8 +275,8 @@
 	}
 
 	.actions {
-		width: 3.2rem;
-		padding-right: 0.7rem;
+		width: 3.6rem;
+		padding-right: 0.9rem;
 	}
 
 	/* 「前日」は 30 行ぶん常時出すと目立ちすぎる。行に触れたときだけ見せる */

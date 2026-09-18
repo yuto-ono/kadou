@@ -60,8 +60,8 @@
 
 <style>
 	.time {
-		width: 4.2rem;
-		padding: 0.1rem 0.2rem;
+		width: 4.9rem;
+		padding: 0.15rem 0.25rem;
 		text-align: center;
 		font-variant-numeric: tabular-nums;
 	}
