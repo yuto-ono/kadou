@@ -1,0 +1,64 @@
+<script lang="ts">
+	import { parseTimeInput, type TimeParseFailure } from '$lib/domain/time';
+
+	/**
+	 * 時刻の入力欄（SPEC.md §8「時刻入力の形式」）。
+	 *
+	 * <input type="time"> は 24 時以降を受け付けないためテキスト入力にする。
+	 * 正規化は確定時（blur / Enter）に行う。打鍵のたびに書き換えるとカーソルが飛ぶ。
+	 */
+	interface Props {
+		value: string | null;
+		invalid?: boolean;
+		label: string;
+		onCommit: (value: string | null) => void;
+	}
+
+	let { value, invalid = false, label, onCommit }: Props = $props();
+
+	/** 編集中の下書き。null は「編集していない」で、表示は value に従う */
+	let draft = $state<string | null>(null);
+	let formatError = $state<TimeParseFailure | null>(null);
+
+	const shown = $derived(draft ?? value ?? '');
+	const hasError = $derived(invalid || formatError !== null);
+
+	function commit() {
+		if (draft === null) return;
+
+		const parsed = parseTimeInput(draft);
+		if (!parsed.ok) {
+			formatError = parsed.reason;
+			return;
+		}
+		formatError = null;
+		draft = null;
+		if (parsed.value !== value) onCommit(parsed.value);
+	}
+
+	const MESSAGE: Record<TimeParseFailure, string> = {
+		format: '時刻として読めません',
+		hour: '時は 47 までです',
+		minute: '分は 59 までです'
+	};
+</script>
+
+<input
+	class="time"
+	class:field-error={hasError}
+	aria-label={label}
+	aria-invalid={hasError}
+	title={formatError ? MESSAGE[formatError] : undefined}
+	value={shown}
+	oninput={(e) => (draft = e.currentTarget.value)}
+	onblur={commit}
+	onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+/>
+
+<style>
+	.time {
+		width: 4.5rem;
+		text-align: center;
+		font-variant-numeric: tabular-nums;
+	}
+</style>

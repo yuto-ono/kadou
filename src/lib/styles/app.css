@@ -1,0 +1,81 @@
+/* 画面のスタイル。報告書の印刷レイアウトは print.css が持つ */
+
+:root {
+	--bg: #ffffff;
+	--fg: #1a1a1a;
+	--muted: #6b7280;
+	--border: #d4d4d8;
+	--border-strong: #a1a1aa;
+	--row-weekend: #f4f4f5;
+	--row-selected: #e0f2fe;
+	--accent: #0369a1;
+	--error: #b91c1c;
+	--error-bg: #fef2f2;
+	--panel-width: 22rem;
+
+	color-scheme: light;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--fg);
+	font-family:
+		'Hiragino Sans', 'Noto Sans JP', system-ui, sans-serif;
+	font-size: 14px;
+	line-height: 1.5;
+}
+
+button {
+	font: inherit;
+	padding: 0.25rem 0.75rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 4px;
+	background: #fff;
+	cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+	background: var(--row-weekend);
+}
+
+button:disabled {
+	color: var(--muted);
+	cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+	font: inherit;
+	padding: 0.15rem 0.3rem;
+	border: 1px solid var(--border);
+	border-radius: 3px;
+	background: #fff;
+	color: inherit;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+}
+
+.field-error {
+	border-color: var(--error);
+	background: var(--error-bg);
+}
+
+.issues {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	color: var(--error);
+	font-size: 0.85em;
+}
