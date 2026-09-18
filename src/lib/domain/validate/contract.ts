@@ -11,7 +11,7 @@ import { issue, type Issue } from './issue';
 export function validateContract(contract: Contract): Issue[] {
 	const issues: Issue[] = [];
 
-	for (const field of ['workerName', 'projectName', 'clientName'] as const) {
+	for (const field of ['workerName', 'clientName'] as const) {
 		if (contract[field].trim() === '') {
 			issues.push(issue('contractNameEmpty', { field }));
 		}

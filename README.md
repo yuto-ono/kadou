@@ -25,18 +25,18 @@ pnpm start
 
 ## データディレクトリ
 
-読み書きするファイルの場所は環境変数 `KADOU_DATA_DIR` で指定する。既定はカレントディレクトリ。
-
-```sh
-KADOU_DATA_DIR=~/work/kadou-records pnpm dev
-```
-
-アプリのソースと作業記録を別のリポジトリに置けるようにするための仕組みで、作業記録側は git で管理することを前提としている（SPEC.md §4.5）。配置は次のとおり。
+作業記録はこのリポジトリで管理する。配置は次のとおり。
 
 ```
 contract.yaml     契約設定
 months/
   2026-09.yaml    月次データ
+```
+
+場所を変えたい場合は環境変数 `KADOU_DATA_DIR` を指定する。本番の記録に触れずに動作を試すときに使う。
+
+```sh
+KADOU_DATA_DIR=/tmp/kadou-trial pnpm dev
 ```
 
 `contract.yaml` はアプリから書き込まない。存在しない場合は雛形を画面に表示するので、内容を確認して自分で作成する。

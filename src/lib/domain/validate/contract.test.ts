@@ -6,7 +6,6 @@ import { blocksMonthCreation, validateContract } from './contract';
 const valid: Contract = {
 	...CONTRACT_DEFAULTS,
 	workerName: '山田 太郎',
-	projectName: '勤怠管理システム開発',
 	clientName: '株式会社サンプル'
 };
 
@@ -18,9 +17,9 @@ describe('validateContract', () => {
 		expect(codes()).toEqual([]);
 	});
 
-	it('氏名・案件名・客先名は空にできない', () => {
+	it('氏名・客先名は空にできない', () => {
 		expect(codes({ workerName: '' })).toEqual(['contractNameEmpty']);
-		expect(codes({ projectName: '   ' })).toEqual(['contractNameEmpty']);
+		expect(codes({ clientName: '   ' })).toEqual(['contractNameEmpty']);
 		expect(codes({ workerName: '', clientName: '' })).toHaveLength(2);
 	});
 

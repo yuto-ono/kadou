@@ -20,7 +20,6 @@ describe('SPEC の実例（§4.5）', () => {
 	it('契約スナップショットを読む', () => {
 		expect(data.contract).toEqual({
 			workerName: '山田 太郎',
-			projectName: '勤怠管理システム開発',
 			clientName: '株式会社サンプル',
 			lowerHours: 140,
 			upperHours: 180,
@@ -61,7 +60,6 @@ describe('serializeMonth', () => {
 		const m = emptyMonth('2026-09', {
 			...CONTRACT_DEFAULTS,
 			workerName: '山田 太郎',
-			projectName: '案件',
 			clientName: '客先'
 		});
 		m.remarks = '祝日が重なりました。';
@@ -203,7 +201,6 @@ describe('手で編集されたファイルの防御', () => {
 		expect(data.days).toHaveLength(30);
 		expect(data.contract).toEqual({
 			workerName: '',
-			projectName: '',
 			clientName: '',
 			lowerHours: 140,
 			upperHours: 180,

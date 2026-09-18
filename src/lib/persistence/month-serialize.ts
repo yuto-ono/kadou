@@ -14,7 +14,6 @@ export function serializeMonth(data: MonthData): string {
 		month: quoted(data.month),
 		contract: {
 			workerName: data.contract.workerName,
-			projectName: data.contract.projectName,
 			clientName: data.contract.clientName,
 			lowerHours: data.contract.lowerHours,
 			upperHours: data.contract.upperHours,

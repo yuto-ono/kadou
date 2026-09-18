@@ -22,14 +22,13 @@ export function parseContract(text: string): Contract {
 	}
 
 	const c = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {};
-	const text_ = (key: 'workerName' | 'projectName' | 'clientName') =>
+	const text_ = (key: 'workerName' | 'clientName') =>
 		typeof c[key] === 'string' ? c[key] : CONTRACT_DEFAULTS[key];
 	const num = (key: 'lowerHours' | 'upperHours' | 'dailyHours') =>
 		typeof c[key] === 'number' && Number.isFinite(c[key]) ? c[key] : CONTRACT_DEFAULTS[key];
 
 	return {
 		workerName: text_('workerName'),
-		projectName: text_('projectName'),
 		clientName: text_('clientName'),
 		lowerHours: num('lowerHours'),
 		upperHours: num('upperHours'),

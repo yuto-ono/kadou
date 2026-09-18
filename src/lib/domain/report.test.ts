@@ -8,7 +8,6 @@ function september(): MonthData {
 	return emptyMonth('2026-09', {
 		...CONTRACT_DEFAULTS,
 		workerName: '山田 太郎',
-		projectName: '勤怠管理システム開発',
 		clientName: '株式会社サンプル'
 	});
 }

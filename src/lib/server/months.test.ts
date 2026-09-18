@@ -25,7 +25,6 @@ function september(): MonthData {
 	const m = emptyMonth('2026-09', {
 		...CONTRACT_DEFAULTS,
 		workerName: '山田 太郎',
-		projectName: '案件',
 		clientName: '客先'
 	});
 	m.days[0] = {

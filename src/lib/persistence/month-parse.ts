@@ -130,7 +130,6 @@ function readContract(value: unknown, issues: Issue[]): ContractSnapshot {
 
 	return {
 		workerName: readText(c.workerName),
-		projectName: readText(c.projectName),
 		clientName: readText(c.clientName),
 		lowerHours: num('lowerHours'),
 		upperHours: num('upperHours'),

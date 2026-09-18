@@ -18,8 +18,6 @@
 				<dd>{report.period}</dd>
 				<dt>氏名</dt>
 				<dd>{report.workerName}</dd>
-				<dt>案件名</dt>
-				<dd>{report.projectName}</dd>
 				<dt>客先</dt>
 				<dd>{report.clientName}</dd>
 			</dl>

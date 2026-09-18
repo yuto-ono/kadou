@@ -32,7 +32,6 @@ export interface ReportModel {
 	/** 対象期間。`2026年9月1日 〜 2026年9月30日` */
 	period: string;
 	workerName: string;
-	projectName: string;
 	clientName: string;
 	rows: ReportRow[];
 	footer: {
@@ -58,7 +57,6 @@ export function buildReport(month: MonthData): ReportModel {
 		title: '作業報告書',
 		period: `${year}年${mon}月1日 〜 ${year}年${mon}月${lastDay}日`,
 		workerName: month.contract.workerName,
-		projectName: month.contract.projectName,
 		clientName: month.contract.clientName,
 		rows: month.days.map(buildRow),
 		footer: {

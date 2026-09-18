@@ -53,7 +53,6 @@ export interface DayRecord {
  */
 export interface ContractSnapshot {
 	workerName: string;
-	projectName: string;
 	clientName: string;
 	lowerHours: number;
 	upperHours: number;

@@ -1,9 +1,8 @@
 import type { Contract, DayRecord, DayType, NonWorkDayType } from './types';
 
-/** 契約設定の既定値（SPEC.md §4.1）。氏名・案件名・客先名には既定値がない */
+/** 契約設定の既定値（SPEC.md §4.1）。氏名・客先名には既定値がない */
 export const CONTRACT_DEFAULTS: Contract = {
 	workerName: '',
-	projectName: '',
 	clientName: '',
 	lowerHours: 140,
 	upperHours: 180,

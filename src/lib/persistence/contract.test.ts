@@ -7,7 +7,6 @@ describe('parseContract', () => {
 	it('書かれた値を読む', () => {
 		const c = parseContract(`
 workerName: 山田 太郎
-projectName: 勤怠管理システム開発
 clientName: 株式会社サンプル
 lowerHours: 150
 upperHours: 190
@@ -16,7 +15,6 @@ maxEndTime: "30:00"
 `);
 		expect(c).toEqual({
 			workerName: '山田 太郎',
-			projectName: '勤怠管理システム開発',
 			clientName: '株式会社サンプル',
 			lowerHours: 150,
 			upperHours: 190,

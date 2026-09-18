@@ -1,7 +1,6 @@
 month: "2026-09"
 contract:
   workerName: 山田 太郎
-  projectName: 勤怠管理システム開発
   clientName: 株式会社サンプル
   lowerHours: 140
   upperHours: 180

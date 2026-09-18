@@ -83,7 +83,6 @@ export function emptyDay(date: DateString): DayRecord {
 export function toSnapshot(contract: ContractSnapshot): ContractSnapshot {
 	return {
 		workerName: contract.workerName,
-		projectName: contract.projectName,
 		clientName: contract.clientName,
 		lowerHours: contract.lowerHours,
 		upperHours: contract.upperHours,
