@@ -5,7 +5,7 @@ import ts from 'typescript-eslint';
 import svelteConfig from './svelte.config.js';
 
 /**
- * 層の境界（CLAUDE.md「ドメインロジックはフレームワークから切り離す」）。
+ * 層の境界（AGENTS.md「ドメインロジックはフレームワークから切り離す」）。
  *
  *   domain/      ← persistence/ ← server/
  *

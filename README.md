@@ -5,7 +5,7 @@
 日々の稼働時間を YAML ファイルへ記録し、月次の作業報告書を A4 縦 1 ページの PDF として出力する。
 
 - 仕様: [SPEC.md](SPEC.md)（唯一の正）
-- 実装上の約束: [CLAUDE.md](CLAUDE.md)
+- 実装上の約束: [AGENTS.md](AGENTS.md)（Claude Code からも `CLAUDE.md` 経由で読み込む）
 
 ## 起動
 
