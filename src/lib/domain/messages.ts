@@ -22,7 +22,7 @@ const TEMPLATES: Record<Issue['code'], (p: Record<string, string | number>) => s
 	fileDuplicateDate: (p) => `同じ日付が複数あります: ${p.date}`,
 	fileFieldDropped: (p) => `${p.field} の値を解釈できず、既定値に戻しました`,
 	fileLegacyField: (p) =>
-		`旧形式の ${p.field} は読み込みません。移行スクリプトで workPeriods へ変換してください`
+		`旧形式の ${p.field} は読み込みません。workPeriods へ変換してください`
 };
 
 export function messageOf(issue: Issue): string {
