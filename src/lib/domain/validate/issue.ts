@@ -10,14 +10,10 @@ import type { DateString } from '../types';
 
 export type IssueCode =
 	// 稼働入力（SPEC.md §8）
-	| 'startTimeOutOfRange'
-	| 'endTimeBeforeStart'
-	| 'endTimeOverMax'
-	| 'breakZeroLength'
-	| 'breakOutsideWork'
-	| 'breakOverlap'
-	| 'breakTotalTooLong'
-	| 'breakWithoutWorkTime'
+	| 'periodStartOutOfRange'
+	| 'periodEndNotAfterStart'
+	| 'periodEndOverMax'
+	| 'periodOverlap'
 	| 'workContentTooLong'
 	// 契約設定（SPEC.md §8）
 	| 'contractNameEmpty'
@@ -28,13 +24,14 @@ export type IssueCode =
 	| 'fileMonthMismatch'
 	| 'fileUnknownDate'
 	| 'fileDuplicateDate'
-	| 'fileFieldDropped';
+	| 'fileFieldDropped'
+	| 'fileLegacyField';
 
 /** エラーの発生源。UI が該当箇所へエラーを出すために使う */
 export interface IssueTarget {
 	date?: DateString;
-	/** 休憩区間の添字 */
-	breakIndex?: number;
+	/** 稼働区間の添字。並べ替える前の配列での位置 */
+	periodIndex?: number;
 	/** 契約設定やファイル全体のフィールド名 */
 	field?: string;
 }

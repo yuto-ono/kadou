@@ -38,9 +38,10 @@ describe('SPEC の実例（§4.5）', () => {
 		expect(data.days[0]).toEqual({
 			date: '2026-09-01',
 			dayType: 'work',
-			startTime: '09:30',
-			endTime: '19:00',
-			breaks: [{ start: '12:00', end: '13:00' }],
+			workPeriods: [
+				{ start: '09:30', end: '12:00' },
+				{ start: '13:00', end: '19:00' }
+			],
 			workContent: '認証基盤のリファクタリング',
 			journal: 'レビュー指摘の対応。\n- トークン検証の順序を入れ替え\n- 移行手順は次週あらためて相談',
 			contentAutoFilled: false
@@ -49,7 +50,7 @@ describe('SPEC の実例（§4.5）', () => {
 
 	it('ファイルにない日を補う（SPEC.md §4.4「全日分を保持」）', () => {
 		expect(data.days).toHaveLength(30);
-		expect(data.days[1]).toMatchObject({ date: '2026-09-02', dayType: 'work', startTime: null });
+		expect(data.days[1]).toMatchObject({ date: '2026-09-02', dayType: 'work', workPeriods: [] });
 		// 補った日も曜日から土日を判定する
 		expect(data.days[4]).toMatchObject({ date: '2026-09-05', dayType: 'weekend' });
 	});
@@ -65,11 +66,10 @@ describe('serializeMonth', () => {
 		m.remarks = '祝日が重なりました。';
 		m.days[0] = {
 			...m.days[0],
-			startTime: '09:30',
-			endTime: '26:00',
-			breaks: [
-				{ start: '12:00', end: '13:00' },
-				{ start: '25:00', end: '25:30' }
+			workPeriods: [
+				{ start: '09:30', end: '12:00' },
+				{ start: '13:00', end: '25:00' },
+				{ start: '25:30', end: '26:00' }
 			],
 			workContent: '認証基盤のリファクタリング',
 			journal: 'レビュー指摘の対応。\n- 順序を入れ替え'
@@ -87,7 +87,7 @@ describe('serializeMonth', () => {
 	it('時刻と日付をすべてクォートする（SPEC.md §4.5）', () => {
 		const text = serializeMonth(rich());
 		for (const line of text.split('\n')) {
-			const m = /^\s*(?:- )?(month|date|startTime|endTime|start|end): (.*)$/.exec(line);
+			const m = /^\s*(?:- )?(month|date|start|end): (.*)$/.exec(line);
 			if (m) expect(m[2], line).toMatch(/^".*"$/);
 		}
 	});
@@ -142,16 +142,16 @@ describe('serializeMonth', () => {
 });
 
 describe('normalizeMonth', () => {
-	it('休憩区間を start の昇順へ並べる', () => {
+	it('稼働区間を start の昇順へ並べる', () => {
 		const m = emptyMonth('2026-09', CONTRACT_DEFAULTS);
 		m.days[0] = {
 			...m.days[0],
-			breaks: [
-				{ start: '15:00', end: '15:15' },
-				{ start: '12:00', end: '13:00' }
+			workPeriods: [
+				{ start: '13:00', end: '19:00' },
+				{ start: '09:30', end: '12:00' }
 			]
 		};
-		expect(normalizeMonth(m).days[0].breaks.map((b) => b.start)).toEqual(['12:00', '15:00']);
+		expect(normalizeMonth(m).days[0].workPeriods.map((p) => p.start)).toEqual(['09:30', '13:00']);
 	});
 
 	it('冪等', () => {
@@ -165,8 +165,7 @@ describe('手で編集されたファイルの防御', () => {
 		const { data } = parseMonth(fixture('yaml11'), '2026-09');
 		expect(data.days[0]).toMatchObject({
 			date: '2026-09-01',
-			startTime: '12:00',
-			endTime: '21:30'
+			workPeriods: [{ start: '12:00', end: '21:30' }]
 		});
 	});
 
@@ -185,10 +184,18 @@ describe('手で編集されたファイルの防御', () => {
 	it('解釈できない値は既定値へ倒して報告する', () => {
 		const { data, issues } = parseMonth(fixture('broken'), '2026-09');
 		const dropped = issues.filter((i) => i.code === 'fileFieldDropped');
-		expect(dropped.map((i) => i.target.field)).toEqual(
-			expect.arrayContaining(['dayType', 'startTime'])
-		);
-		expect(data.days[2]).toMatchObject({ date: '2026-09-03', dayType: 'work', startTime: null });
+		expect(dropped.map((i) => i.target.field)).toEqual(['dayType', 'workPeriods', 'workPeriods']);
+		expect(data.days[2]).toMatchObject({ date: '2026-09-03', dayType: 'work', workPeriods: [] });
+	});
+
+	it('旧形式の時刻は読み込まず、ファイルにつき 1 件だけ報告する', () => {
+		const { data, issues } = parseMonth(fixture('broken'), '2026-09');
+		const legacy = issues.filter((i) => i.code === 'fileLegacyField');
+		expect(legacy).toEqual([
+			{ code: 'fileLegacyField', target: { field: 'days' }, params: { field: 'startTime / endTime / breaks' } }
+		]);
+		expect(data.days[3]).toMatchObject({ date: '2026-09-04', workPeriods: [] });
+		expect(data.days[3]).not.toHaveProperty('startTime');
 	});
 
 	it('month がファイル名と食い違えば報告する', () => {

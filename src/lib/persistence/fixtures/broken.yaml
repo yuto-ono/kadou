@@ -8,4 +8,14 @@ days:
     dayType: work
   - date: "2026-09-03"
     dayType: なんとか
-    startTime: 朝
+    workPeriods:
+      - start: 朝
+        end: "12:00"
+      - start: "13:00"
+  - date: "2026-09-04"
+    dayType: work
+    startTime: "09:30"
+    endTime: "19:00"
+    breaks:
+      - start: "12:00"
+        end: "13:00"

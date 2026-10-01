@@ -1,29 +1,32 @@
 <script lang="ts">
-	import { breakTotal } from '$lib/domain/breaks';
 	import { weekdayLabel } from '$lib/domain/calendar';
 	import { DAY_TYPES, DAY_TYPE_LABEL } from '$lib/domain/defaults';
 	import { formatDuration } from '$lib/domain/time';
 	import type { DayRecord, DayType } from '$lib/domain/types';
+	import { WORK_CONTENT_MAX } from '$lib/domain/validate/day';
 	import type { Issue } from '$lib/domain/validate/issue';
-	import { dailyWorkMinutes } from '$lib/domain/workday';
-	import TimeCell from './TimeCell.svelte';
+	import { dayTimes } from '$lib/domain/workday';
+	import TextField from './TextField.svelte';
 
 	/**
 	 * 一覧の 1 行（SPEC.md §6.1「一覧」）。
 	 *
-	 * 区分・開始・終了は行で直接編集する。休憩と作業内容は表示のみで、編集は詳細
-	 * パネル。毎日発生する入力を一覧で完結させるため。
+	 * 区分と作業内容は行で直接編集する。毎日手で打つのは作業内容なので、一覧で
+	 * 完結させる。開始・終了・休憩・稼働は稼働区間からの導出値で、押すと詳細パネル
+	 * が開く。稼働区間は個数が可変なので行に収めない。
 	 */
 	interface Props {
 		day: DayRecord;
 		issues: Issue[];
 		selected: boolean;
 		isToday: boolean;
-		canCopyPrevious: boolean;
+		/** 空欄の作業内容へフォーカスしたときに入れる前回の内容（SPEC.md §6.1「入力補助」） */
+		suggestion: string | null;
 		onSelect: () => void;
 		onChangeDayType: (next: DayType) => void;
-		onChangeTime: (field: 'startTime' | 'endTime', value: string | null) => void;
-		onCopyPrevious: () => void;
+		onChangeContent: (workContent: string) => void;
+		/** 作業内容を Enter で確定したとき。次の日の作業内容へ移る */
+		onContentEnter: () => void;
 	}
 
 	let {
@@ -31,17 +34,17 @@
 		issues,
 		selected,
 		isToday,
-		canCopyPrevious,
+		suggestion,
 		onSelect,
 		onChangeDayType,
-		onChangeTime,
-		onCopyPrevious
+		onChangeContent,
+		onContentEnter
 	}: Props = $props();
 
 	const weekday = $derived(weekdayLabel(day.date));
-	const workMinutes = $derived(dailyWorkMinutes(day));
-	const breakMinutes = $derived(breakTotal(day.breaks));
-	const invalid = $derived((field: string) => issues.some((i) => i.target.field === field));
+	const times = $derived(dayTimes(day));
+	const periodInvalid = $derived(issues.some((i) => i.target.periodIndex !== undefined));
+	const contentInvalid = $derived(issues.some((i) => i.target.field === 'workContent'));
 </script>
 
 <tr
@@ -73,43 +76,45 @@
 			{/each}
 		</select>
 	</td>
-	<td>
-		<TimeCell
-			value={day.startTime}
-			invalid={invalid('startTime')}
-			label="{day.date} の開始時刻"
-			onCommit={(v) => onChangeTime('startTime', v)}
-		/>
+	<!--
+		導出値の 4 列。どこを押しても詳細パネルが開く。Tab で止まるのは先頭の 1 つだけに
+		して、作業内容から次の日へ移るときの停止位置を増やさない
+	-->
+	<td class="time">
+		<button class="open tnum" class:field-error={periodInvalid} onclick={onSelect} title="稼働区間を編集する">
+			{times?.start ?? ''}
+		</button>
 	</td>
-	<td>
-		<TimeCell
-			value={day.endTime}
-			invalid={invalid('endTime')}
-			label="{day.date} の終了時刻"
-			onCommit={(v) => onChangeTime('endTime', v)}
-		/>
+	<td class="time">
+		<button class="open tnum" class:field-error={periodInvalid} onclick={onSelect} tabindex="-1">
+			{times?.end ?? ''}
+		</button>
 	</td>
-	<!-- 休憩は合計のみ表示。編集は詳細パネル（SPEC.md §6.1） -->
-	<td class="num faint tnum" class:field-error={invalid('breaks')}>
-		{breakMinutes > 0 ? formatDuration(breakMinutes) : ''}
+	<td class="num faint">
+		<button class="open tnum" onclick={onSelect} tabindex="-1">
+			{times?.breakMinutes == null ? '' : formatDuration(times.breakMinutes)}
+		</button>
 	</td>
-	<td class="num worked tnum">{workMinutes === null ? '' : formatDuration(workMinutes)}</td>
+	<td class="num worked">
+		<button class="open tnum" onclick={onSelect} tabindex="-1">
+			{times === null ? '' : formatDuration(times.workMinutes)}
+		</button>
+	</td>
 	<td class="content">
-		<!-- 編集可能セルのクリックは一覧側の編集。ここを押すとパネルが開く（SPEC.md §6.1） -->
-		<button class="open" onclick={onSelect} title="この日の詳細を開く">
-			<span class="text">{day.workContent}</span>
+		<div class="content-cell">
+			<TextField
+				id="content-{day.date}"
+				value={day.workContent}
+				label="{day.date} の作業内容"
+				maxLength={WORK_CONTENT_MAX}
+				quiet
+				invalid={contentInvalid}
+				{suggestion}
+				onCommit={onChangeContent}
+				onEnter={onContentEnter}
+			/>
 			{#if day.journal !== ''}<span class="mark" title="メモあり">✎</span>{/if}
-		</button>
-	</td>
-	<td class="actions">
-		<button
-			class="copy"
-			disabled={!canCopyPrevious}
-			onclick={onCopyPrevious}
-			title="直前の稼働日の開始・終了・休憩を複製する"
-		>
-			前日
-		</button>
+		</div>
 	</td>
 </tr>
 
@@ -219,18 +224,52 @@
 		color: var(--fg);
 	}
 
-	.num {
-		width: 4.4rem;
-		text-align: right;
+	.time {
+		width: 4.9rem;
 	}
 
-	.faint {
-		color: var(--fg-subtle);
+	.num {
+		width: 4.4rem;
 	}
 
 	.worked {
 		padding-right: 1rem;
+	}
+
+	/* 導出値。入力欄に見せない。押せることはホバーで示す */
+	.open {
+		width: 100%;
+		min-height: 1.6rem;
+		padding: 0.1rem 0.25rem;
+		border: 1px solid transparent;
+		border-radius: 4px;
+		background: none;
+		color: inherit;
+		font: inherit;
+		text-align: center;
+	}
+
+	.num .open {
+		text-align: right;
+	}
+
+	.faint .open {
+		color: var(--fg-subtle);
+	}
+
+	.worked .open {
 		font-weight: 600;
+	}
+
+	.open:hover {
+		border-color: var(--line-strong);
+		background: var(--surface);
+	}
+
+	/* 稼働区間にエラーがある日。直す場所は詳細パネルなので、開く入口に出す */
+	.open.field-error {
+		border-color: var(--error);
+		background: var(--error-soft);
 	}
 
 	.content {
@@ -240,59 +279,25 @@
 		border-left: 1px solid var(--line);
 	}
 
-	.open {
+	.content-cell {
 		display: flex;
 		align-items: center;
 		gap: 0.3rem;
-		width: 100%;
-		padding: 0.1rem 0.35rem;
-		border: 1px solid transparent;
-		border-radius: 4px;
-		background: none;
+	}
+
+	.content-cell :global(input) {
+		flex: 1;
+		min-width: 0;
 		color: var(--fg-muted);
-		text-align: left;
 	}
 
-	tr[data-daytype='work'] .open {
+	tr[data-daytype='work'] .content-cell :global(input) {
 		color: var(--fg);
-	}
-
-	.open:hover {
-		border-color: var(--line-strong);
-		background: var(--surface);
-	}
-
-	.text {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
 	}
 
 	.mark {
 		flex: none;
 		color: var(--accent);
 		font-size: 0.85em;
-	}
-
-	.actions {
-		width: 3.6rem;
-		padding-right: 0.9rem;
-	}
-
-	/* 「前日」は 30 行ぶん常時出すと目立ちすぎる。行に触れたときだけ見せる */
-	.copy {
-		padding: 0 0.35rem;
-		font-size: 0.72rem;
-		opacity: 0;
-		transition: opacity 0.1s;
-	}
-
-	tr:hover .copy,
-	.copy:focus-visible {
-		opacity: 1;
-	}
-
-	.copy:disabled {
-		opacity: 0;
 	}
 </style>

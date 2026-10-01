@@ -69,7 +69,7 @@ export function emptyDay(date: DateString): DayRecord {
 		date,
 		dayType: isWeekend(date) ? 'weekend' : 'work',
 		...DAY_DEFAULTS,
-		breaks: []
+		workPeriods: []
 	};
 }
 

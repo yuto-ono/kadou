@@ -4,11 +4,11 @@
 	import { messageOf } from '$lib/domain/messages';
 	import { formatDuration } from '$lib/domain/time';
 	import type { DayRecord, DayType } from '$lib/domain/types';
-	import { contentLength, WORK_CONTENT_MAX } from '$lib/domain/validate/day';
+	import { WORK_CONTENT_MAX } from '$lib/domain/validate/day';
 	import type { Issue } from '$lib/domain/validate/issue';
-	import { dailyWorkMinutes } from '$lib/domain/workday';
-	import BreakEditor from './BreakEditor.svelte';
-	import TimeCell from './TimeCell.svelte';
+	import { dayTimes } from '$lib/domain/workday';
+	import PeriodEditor from './PeriodEditor.svelte';
+	import TextField from './TextField.svelte';
 
 	/**
 	 * 詳細パネル（SPEC.md §6.1「詳細パネル」）。
@@ -16,41 +16,27 @@
 	 * モーダルではなく右サイドパネルとするのは、開いている間も月次サマリと一覧が
 	 * 見え続けるため。パネルを閉じずに別の日へ移れる。
 	 *
-	 * 並びは書く頻度の順。時刻 → 休憩 → 作業内容は毎日、メモは要るときだけ。
+	 * 並びは書く頻度の順。稼働区間 → 作業内容は毎日、メモは要るときだけ。区分と
+	 * 作業内容は一覧でも編集できる。どちらも同じ日次レコードを参照するだけなので、
+	 * 値を二重に持つことはない（SPEC.md §6.1）。
 	 */
 	interface Props {
 		day: DayRecord;
 		issues: Issue[];
 		onClose: () => void;
+		/** 空欄の作業内容へフォーカスしたときに入れる前回の内容（SPEC.md §6.1「入力補助」） */
+		suggestion: string | null;
 		onChange: (patch: Partial<DayRecord>) => void;
 		onChangeDayType: (next: DayType) => void;
 	}
 
-	let { day, issues, onClose, onChange, onChangeDayType }: Props = $props();
+	let { day, issues, suggestion, onClose, onChange, onChangeDayType }: Props = $props();
 
-	const remaining = $derived(WORK_CONTENT_MAX - contentLength(day.workContent));
-	const workMinutes = $derived(dailyWorkMinutes(day));
+	let contentLength = $state(0);
+	const remaining = $derived(WORK_CONTENT_MAX - contentLength);
+	const times = $derived(dayTimes(day));
 	const contentIssues = $derived(issues.filter((i) => i.target.field === 'workContent'));
-	const breakIssues = $derived(
-		issues.filter((i) => i.target.breakIndex !== undefined || i.target.field === 'breaks')
-	);
-	const timeIssues = $derived(
-		issues.filter((i) => i.target.field === 'startTime' || i.target.field === 'endTime')
-	);
-
-	/**
-	 * 30 文字を超える入力は受け付けない（SPEC.md §4.2）。
-	 *
-	 * 上限を守れば印字幅に収まることが保証され、31 行 1 ページの制約が確定する。
-	 * 改行も受け付けない。行高が可変になると同じ制約が崩れる。
-	 */
-	function setContent(raw: string) {
-		const text = raw.replace(/[\r\n]+/g, ' ');
-		onChange({
-			workContent: [...text].slice(0, WORK_CONTENT_MAX).join(''),
-			contentAutoFilled: false
-		});
-	}
+	const periodIssues = $derived(issues.filter((i) => i.target.periodIndex !== undefined));
 </script>
 
 <aside class="panel" aria-label="{day.date} の詳細">
@@ -84,69 +70,48 @@
 			</label>
 			<p class="worked">
 				<span class="label">稼働</span>
-				<strong class="tnum">{workMinutes === null ? '—' : formatDuration(workMinutes)}</strong>
+				<strong class="tnum">{times === null ? '—' : formatDuration(times.workMinutes)}</strong>
 			</p>
 		</div>
 
-		<div class="field">
-			<span class="label">開始 〜 終了</span>
-			<div class="times">
-				<TimeCell
-					value={day.startTime}
-					quiet={false}
-					invalid={timeIssues.some((i) => i.target.field === 'startTime')}
-					label="開始時刻"
-					onCommit={(v) => onChange({ startTime: v })}
-				/>
-				<span class="sep" aria-hidden="true">〜</span>
-				<TimeCell
-					value={day.endTime}
-					quiet={false}
-					invalid={timeIssues.some((i) => i.target.field === 'endTime')}
-					label="終了時刻"
-					onCommit={(v) => onChange({ endTime: v })}
-				/>
-			</div>
-			{#if timeIssues.length > 0}
-				<ul class="issues">
-					{#each timeIssues as issue, i (i)}<li>{messageOf(issue)}</li>{/each}
-				</ul>
-			{/if}
-		</div>
-
-		<BreakEditor {day} issues={breakIssues} onChange={(breaks) => onChange({ breaks })} />
+		<PeriodEditor {day} issues={periodIssues} onChange={(workPeriods) => onChange({ workPeriods })} />
 	</section>
 
 	<section class="block">
-		<label class="field">
+		<div class="field">
 			<span class="label">
 				作業内容
 				<small class="count tnum" class:over={remaining < 0}>残り {remaining}</small>
 			</span>
-			<input
-				class:field-error={contentIssues.length > 0}
+			<TextField
 				value={day.workContent}
-				maxlength={WORK_CONTENT_MAX}
+				label="作業内容"
+				maxLength={WORK_CONTENT_MAX}
 				placeholder="報告書の明細表に出ます"
-				oninput={(e) => setContent(e.currentTarget.value)}
+				invalid={contentIssues.length > 0}
+				{suggestion}
+				bind:length={contentLength}
+				onCommit={(workContent) => onChange({ workContent, contentAutoFilled: false })}
 			/>
 			{#if contentIssues.length > 0}
 				<ul class="issues">
 					{#each contentIssues as issue, i (i)}<li>{messageOf(issue)}</li>{/each}
 				</ul>
 			{/if}
-		</label>
+		</div>
 	</section>
 
-	<label class="field grow-area">
+	<div class="field grow-area">
 		<!-- 報告書には出力しない。整形済みのプレビューは設けない（SPEC.md §6.1） -->
 		<span class="label">メモ <small>報告書には出ません</small></span>
-		<textarea
+		<TextField
 			value={day.journal}
+			label="メモ"
+			multiline
 			placeholder="下限割れや長時間稼働の理由など、後から思い出すための覚え書き"
-			oninput={(e) => onChange({ journal: e.currentTarget.value })}
-		></textarea>
-	</label>
+			onCommit={(journal) => onChange({ journal })}
+		/>
+	</div>
 </aside>
 
 <style>
@@ -235,17 +200,6 @@
 		line-height: 1.3;
 	}
 
-	.times {
-		display: flex;
-		align-items: center;
-		gap: 0.35rem;
-	}
-
-	/* 色は区切り文字だけに効かせる。まとめて指定すると入力欄が inherit で薄くなる */
-	.sep {
-		color: var(--fg-subtle);
-	}
-
 	small {
 		margin-left: 0.25rem;
 		color: var(--fg-subtle);
@@ -264,14 +218,14 @@
 		min-height: 7rem;
 	}
 
-	textarea {
+	.grow-area :global(textarea) {
 		flex: 1;
 		min-height: 7rem;
 		resize: vertical;
 		font-size: 0.85rem;
 	}
 
-	::placeholder {
+	.panel :global(::placeholder) {
 		color: var(--fg-subtle);
 	}
 </style>

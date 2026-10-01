@@ -1,40 +1,68 @@
 import { describe, expect, it } from 'vitest';
 import { day, workDay } from './testing';
-import { dailyWorkMinutes, isCountedAsWork } from './workday';
+import { dailyWorkMinutes, dayTimes } from './workday';
 
-describe('dailyWorkMinutes', () => {
-	it('終了 − 開始 − 休憩合計', () => {
-		expect(dailyWorkMinutes(workDay('2026-09-01', '09:30', '19:00', [{ start: '12:00', end: '13:00' }]))).toBe(510);
+describe('dayTimes', () => {
+	it('開始・終了・稼働・休憩を稼働区間から導く', () => {
+		expect(dayTimes(workDay('2026-09-01', ['09:30', '12:00'], ['13:00', '19:00']))).toEqual({
+			start: '09:30',
+			end: '19:00',
+			workMinutes: 510,
+			breakMinutes: 60
+		});
 	});
 
-	it('休憩なしの日は差だけになる', () => {
-		expect(dailyWorkMinutes(workDay('2026-09-01', '09:00', '18:00'))).toBe(540);
+	it('空き時間が複数あれば合計する', () => {
+		const d = workDay('2026-09-01', ['09:00', '12:00'], ['13:00', '15:00'], ['15:15', '18:00']);
+		expect(dayTimes(d)?.breakMinutes).toBe(75);
 	});
 
-	it('24 時超えの終了時刻を同一日の稼働として扱う', () => {
-		expect(dailyWorkMinutes(workDay('2026-09-01', '13:00', '26:00'))).toBe(780);
+	it('区間が 1 件なら休憩は空欄', () => {
+		expect(dayTimes(workDay('2026-09-01', ['09:00', '18:00']))?.breakMinutes).toBeNull();
 	});
 
-	it('日付をまたいだ位置の休憩を差し引く', () => {
-		expect(
-			dailyWorkMinutes(workDay('2026-09-01', '13:00', '26:00', [{ start: '25:00', end: '25:30' }]))
-		).toBe(750);
+	it('区間がすべて隣接していれば休憩は空欄', () => {
+		expect(dayTimes(workDay('2026-09-01', ['09:00', '12:00'], ['12:00', '18:00']))?.breakMinutes).toBeNull();
 	});
 
-	it('丸めない', () => {
-		expect(dailyWorkMinutes(workDay('2026-09-01', '09:07', '18:13'))).toBe(546);
+	it('並べ替える前でも同じ値になる', () => {
+		expect(dayTimes(workDay('2026-09-01', ['13:00', '19:00'], ['09:30', '12:00']))).toMatchObject({
+			start: '09:30',
+			end: '19:00',
+			breakMinutes: 60
+		});
 	});
 
-	it('時刻が欠けている日は未入力として null を返す', () => {
-		expect(dailyWorkMinutes(day('2026-09-01'))).toBeNull();
-		expect(dailyWorkMinutes(day('2026-09-01', { startTime: '09:00' }))).toBeNull();
+	it('24 時超えの区間を同一日の稼働として扱う', () => {
+		expect(dayTimes(workDay('2026-09-01', ['13:00', '24:30'], ['25:00', '26:00']))).toEqual({
+			start: '13:00',
+			end: '26:00',
+			workMinutes: 750,
+			breakMinutes: 30
+		});
+	});
+
+	it('区間が重なっていても休憩を負にしない', () => {
+		expect(dayTimes(workDay('2026-09-01', ['09:00', '13:00'], ['12:00', '18:00']))?.breakMinutes).toBeNull();
+	});
+
+	it('稼働区間がない日は null', () => {
+		expect(dayTimes(day('2026-09-01'))).toBeNull();
 	});
 });
 
-describe('isCountedAsWork', () => {
-	it('区分にかかわらず時刻が揃っていれば数える', () => {
-		// YAML を手で編集すれば休日に時刻が残りうる
-		expect(isCountedAsWork(day('2026-09-05', { dayType: 'weekend', startTime: '10:00', endTime: '15:00' }))).toBe(true);
-		expect(isCountedAsWork(day('2026-09-05', { dayType: 'weekend' }))).toBe(false);
+describe('dailyWorkMinutes', () => {
+	it('丸めない', () => {
+		expect(dailyWorkMinutes(workDay('2026-09-01', ['09:07', '18:13']))).toBe(546);
+	});
+
+	it('稼働区間がない日は未入力として null を返す', () => {
+		expect(dailyWorkMinutes(day('2026-09-01'))).toBeNull();
+	});
+
+	it('区分にかかわらず稼働区間があれば数える', () => {
+		// YAML を手で編集すれば休日に区間が残りうる
+		const d = day('2026-09-05', { dayType: 'weekend', workPeriods: [{ start: '10:00', end: '15:00' }] });
+		expect(dailyWorkMinutes(d)).toBe(300);
 	});
 });

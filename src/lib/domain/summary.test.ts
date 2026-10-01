@@ -45,8 +45,13 @@ describe('summarize', () => {
 
 	it('実績は各日の稼働時間の合計', () => {
 		const m = september();
-		setDay(m, '2026-09-01', { startTime: '09:00', endTime: '18:00' });
-		setDay(m, '2026-09-02', { startTime: '09:00', endTime: '19:00', breaks: [{ start: '12:00', end: '13:00' }] });
+		setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '18:00' }] });
+		setDay(m, '2026-09-02', {
+			workPeriods: [
+				{ start: '09:00', end: '12:00' },
+				{ start: '13:00', end: '19:00' }
+			]
+		});
 		expect(summarize(m, '2026-09-30').actualMinutes).toBe(540 + 540);
 	});
 
@@ -54,21 +59,21 @@ describe('summarize', () => {
 		it('本日は「本日まで」に含める', () => {
 			const m = september();
 			// 09-01 と 09-02 が平日。2 日ぶん働いて、本日が 09-02 ならちょうど 0
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '17:00' });
-			setDay(m, '2026-09-02', { startTime: '09:00', endTime: '17:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
+			setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '17:00' }] });
 			expect(summarize(m, '2026-09-02').paceMinutes).toBe(0);
 		});
 
 		it('本日の前日を基準にすると 1 日ぶんの貯金になる', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '17:00' });
-			setDay(m, '2026-09-02', { startTime: '09:00', endTime: '17:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
+			setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '17:00' }] });
 			expect(summarize(m, '2026-09-01').paceMinutes).toBe(8 * 60);
 		});
 
 		it('過去月では実績 − 想定になる', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '17:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
 			const s = summarize(m, '2026-12-01');
 			expect(s.paceMinutes).toBe(8 * 60 - 22 * 8 * 60);
 		});
@@ -83,14 +88,14 @@ describe('summarize', () => {
 	describe('着地見込み', () => {
 		it('残りの稼働予定日を想定稼働時間で埋める', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '21:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '21:00' }] });
 			// 09-01 は 12h 稼働。残りの平日 21 日 × 8h
 			expect(summarize(m, '2026-09-01').projectedMinutes).toBe(12 * 60 + 21 * 8 * 60);
 		});
 
 		it('過去月では実績そのものになる', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '17:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
 			expect(summarize(m, '2026-12-01').projectedMinutes).toBe(8 * 60);
 		});
 	});
@@ -104,7 +109,7 @@ describe('summarize', () => {
 
 		it('上限を超えた分を超過時間にする', () => {
 			const m = narrow(september());
-			setDay(m, '2026-09-01', { startTime: '06:00', endTime: '23:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '06:00', end: '23:00' }] });
 			const s = summarize(m, '2026-09-30');
 			expect(s.actualMinutes).toBe(17 * 60);
 			expect(s.overMinutes).toBe(60);
@@ -114,7 +119,7 @@ describe('summarize', () => {
 
 		it('下限に届かない分を不足時間にする', () => {
 			const m = narrow(september());
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '15:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '15:00' }] });
 			const s = summarize(m, '2026-09-30');
 			expect(s.actualMinutes).toBe(6 * 60);
 			expect(s.shortMinutes).toBe(2 * 60);
@@ -124,7 +129,7 @@ describe('summarize', () => {
 
 		it('精算幅の中に収まれば超過も不足も 0', () => {
 			const m = narrow(september());
-			setDay(m, '2026-09-01', { startTime: '09:00', endTime: '19:00' });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '19:00' }] });
 			const s = summarize(m, '2026-09-30');
 			expect(s.overMinutes).toBe(0);
 			expect(s.shortMinutes).toBe(0);
@@ -135,9 +140,9 @@ describe('summarize', () => {
 describe('workedDays', () => {
 	it('稼働時間が記録された日を数える', () => {
 		const m = september();
-		setDay(m, '2026-09-01', { startTime: '09:00', endTime: '18:00' });
-		setDay(m, '2026-09-02', { startTime: '09:00', endTime: '18:00' });
-		setDay(m, '2026-09-03', { startTime: '09:00' });
+		setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '18:00' }] });
+		setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '18:00' }] });
+		setDay(m, '2026-09-03', { dayType: 'holiday' });
 		expect(workedDays(m)).toBe(2);
 	});
 });

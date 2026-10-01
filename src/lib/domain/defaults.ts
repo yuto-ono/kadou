@@ -17,9 +17,7 @@ export const CONTRACT_DEFAULTS: Contract = {
  * は既定値を持たず、常に書き出す。
  */
 export const DAY_DEFAULTS = {
-	startTime: null,
-	endTime: null,
-	breaks: [],
+	workPeriods: [],
 	workContent: '',
 	journal: '',
 	contentAutoFilled: false

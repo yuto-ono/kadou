@@ -1,4 +1,4 @@
-import { sortBreaks } from '$lib/domain/breaks';
+import { sortPeriods } from '$lib/domain/periods';
 import { datesOfMonth, emptyDay, toSnapshot } from '$lib/domain/calendar';
 import { DAY_DEFAULTS } from '$lib/domain/defaults';
 import type { DayRecord, MonthData } from '$lib/domain/types';
@@ -11,8 +11,8 @@ import type { DayRecord, MonthData } from '$lib/domain/types';
  *
  * ここでやること:
  *   - 1 日〜末日までの全日を揃える（欠けていれば空のレコードを補う）
- *   - 休憩区間を start の昇順へ並べる
- *   - 稼働しない日に時刻が残っていても消さない（手編集された値を無言で捨てない）
+ *   - 稼働区間を start の昇順へ並べる
+ *   - 稼働しない日に稼働区間が残っていても消さない（手編集された値を無言で捨てない）
  */
 export function normalizeMonth(data: MonthData): MonthData {
 	const byDate = new Map<string, DayRecord>();
@@ -33,6 +33,6 @@ function normalizeDay(day: DayRecord): DayRecord {
 	return {
 		...DAY_DEFAULTS,
 		...day,
-		breaks: sortBreaks(day.breaks ?? [])
+		workPeriods: sortPeriods(day.workPeriods ?? [])
 	};
 }

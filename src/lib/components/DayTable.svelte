@@ -19,6 +19,13 @@
 		if (store.needsClearConfirm(date, next)) onConfirmClear(date, next);
 		else store.changeDayType(date, next);
 	}
+
+	/** 作業内容を Enter で確定したら、次の日の作業内容へ移る（SPEC.md §6.1「一覧」） */
+	function focusNextContent(index: number) {
+		const next = store.data?.days[index + 1];
+		if (next) document.getElementById(`content-${next.date}`)?.focus();
+		else (document.activeElement as HTMLElement | null)?.blur();
+	}
 </script>
 
 <table>
@@ -26,26 +33,25 @@
 		<tr>
 			<th colspan="2">日付</th>
 			<th>区分</th>
-			<th>開始</th>
-			<th>終了</th>
+			<th class="time">開始</th>
+			<th class="time">終了</th>
 			<th class="num">休憩</th>
 			<th class="num">稼働</th>
 			<th class="content">作業内容</th>
-			<th><span class="sr-only">操作</span></th>
 		</tr>
 	</thead>
 	<tbody>
-		{#each store.data?.days ?? [] as day (day.date)}
+		{#each store.data?.days ?? [] as day, index (day.date)}
 			<DayRow
 				{day}
 				issues={store.dayIssues[day.date] ?? []}
 				selected={store.selectedDate === day.date}
 				isToday={day.date === todayDate}
-				canCopyPrevious={store.previousWorkday(day.date) !== null}
+				suggestion={store.suggestContent(day.date)}
 				onSelect={() => (store.selectedDate = day.date)}
 				onChangeDayType={(next) => changeDayType(day.date, next)}
-				onChangeTime={(field, value) => store.updateDay(day.date, { [field]: value })}
-				onCopyPrevious={() => store.copyPreviousWorkday(day.date)}
+				onChangeContent={(workContent) => store.updateDay(day.date, { workContent, contentAutoFilled: false })}
+				onContentEnter={() => focusNextContent(index)}
 			/>
 		{/each}
 	</tbody>
@@ -73,6 +79,10 @@
 		letter-spacing: 0.04em;
 		white-space: nowrap;
 		text-align: left;
+	}
+
+	th.time {
+		text-align: center;
 	}
 
 	th.num {

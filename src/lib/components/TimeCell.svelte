@@ -6,6 +6,7 @@
 	 *
 	 * <input type="time"> は 24 時以降を受け付けないためテキスト入力にする。
 	 * 正規化は確定時（blur / Enter）に行う。打鍵のたびに書き換えるとカーソルが飛ぶ。
+ * Esc で編集前の値へ戻す。
 	 */
 	interface Props {
 		value: string | null;
@@ -38,6 +39,19 @@
 		if (parsed.value !== value) onCommit(parsed.value);
 	}
 
+	/** 確定の規則は全入力欄で共通（SPEC.md §6.1「入力欄の確定」） */
+	function keydown(e: KeyboardEvent & { currentTarget: HTMLInputElement }) {
+		if (e.isComposing || e.keyCode === 229) return;
+		if (e.key === 'Enter') {
+			e.currentTarget.blur();
+		} else if (e.key === 'Escape' && draft !== null) {
+			draft = null;
+			formatError = null;
+			// 戻す値があるときだけ握りつぶす。何もなければパネルを閉じる Esc として通す
+			e.stopPropagation();
+		}
+	}
+
 	const MESSAGE: Record<TimeParseFailure, string> = {
 		format: '時刻として読めません',
 		hour: '時は 47 までです',
@@ -55,7 +69,7 @@
 	value={shown}
 	oninput={(e) => (draft = e.currentTarget.value)}
 	onblur={commit}
-	onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+	onkeydown={keydown}
 />
 
 <style>

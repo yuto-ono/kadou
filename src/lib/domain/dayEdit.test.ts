@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { applyDayTypeChange, copyWorkTimes, findPreviousWorkday, needsClearConfirm } from './dayEdit';
+import { applyDayTypeChange, suggestContent, needsClearConfirm } from './dayEdit';
 import { day, workDay } from './testing';
 
 describe('needsClearConfirm', () => {
 	it('work から他の区分へ移すとき、稼働データがあれば確認する', () => {
-		expect(needsClearConfirm(workDay('2026-09-01', '09:00', '18:00'), 'personal')).toBe(true);
-		expect(needsClearConfirm(day('2026-09-01', { breaks: [{ start: '12:00', end: '13:00' }] }), 'holiday')).toBe(true);
+		expect(needsClearConfirm(workDay('2026-09-01', ['09:00', '18:00']), 'personal')).toBe(true);
 	});
 
 	it('稼働データがなければ確認しない', () => {
@@ -19,11 +18,8 @@ describe('needsClearConfirm', () => {
 
 describe('applyDayTypeChange', () => {
 	it('work 以外へ移すと稼働データを消す', () => {
-		const next = applyDayTypeChange(
-			workDay('2026-09-01', '09:00', '18:00', [{ start: '12:00', end: '13:00' }]),
-			'personal'
-		);
-		expect(next).toMatchObject({ startTime: null, endTime: null, breaks: [] });
+		const next = applyDayTypeChange(workDay('2026-09-01', ['09:00', '12:00'], ['13:00', '18:00']), 'personal');
+		expect(next.workPeriods).toEqual([]);
 	});
 
 	it('区分に応じた文言を自動入力する', () => {
@@ -63,50 +59,43 @@ describe('applyDayTypeChange', () => {
 	});
 
 	it('work へ戻すときは稼働データを触らない', () => {
-		const d = day('2026-09-05', { dayType: 'weekend', startTime: '10:00', endTime: '15:00' });
-		expect(applyDayTypeChange(d, 'work')).toMatchObject({ startTime: '10:00', endTime: '15:00' });
+		const d = day('2026-09-05', { dayType: 'weekend', workPeriods: [{ start: '10:00', end: '15:00' }] });
+		expect(applyDayTypeChange(d, 'work').workPeriods).toEqual([{ start: '10:00', end: '15:00' }]);
 	});
 });
 
-describe('findPreviousWorkday', () => {
+describe('suggestContent', () => {
 	const days = [
-		workDay('2026-09-01', '09:00', '18:00'),
-		day('2026-09-02'),
-		day('2026-09-03')
+		day('2026-09-01', { workContent: '認証基盤のリファクタリング' }),
+		day('2026-09-02', { dayType: 'holiday', workContent: '祝日', contentAutoFilled: true }),
+		day('2026-09-03'),
+		day('2026-09-04')
 	];
 
-	it('開始時刻が入っている直近の日を返す', () => {
-		expect(findPreviousWorkday(days, 2)?.date).toBe('2026-09-01');
+	it('手入力された作業内容を持つ直近の日から取る', () => {
+		expect(suggestContent(days, 3)).toBe('認証基盤のリファクタリング');
 	});
 
-	it('月初では複製元がない', () => {
-		expect(findPreviousWorkday(days, 0)).toBeNull();
+	it('自動入力された文言は取り出し元にしない', () => {
+		expect(suggestContent(days, 2)).toBe('認証基盤のリファクタリング');
 	});
 
-	it('自分自身は複製元にしない', () => {
-		expect(findPreviousWorkday(days, 1)?.date).toBe('2026-09-01');
-	});
-});
-
-describe('copyWorkTimes', () => {
-	const source = workDay('2026-09-01', '09:30', '19:00', [{ start: '12:00', end: '13:00' }]);
-
-	it('開始・終了・休憩を複製する', () => {
-		const next = copyWorkTimes(day('2026-09-02'), source);
-		expect(next).toMatchObject({ startTime: '09:30', endTime: '19:00' });
-		expect(next.breaks).toEqual([{ start: '12:00', end: '13:00' }]);
+	it('手入力であれば稼働しない日の作業内容も取り出し元にする', () => {
+		const withHoliday = [days[0], day('2026-09-02', { dayType: 'holiday', workContent: '障害対応' }), days[2]];
+		expect(suggestContent(withHoliday, 2)).toBe('障害対応');
 	});
 
-	it('休憩は複製先が別の配列を持つ', () => {
-		const next = copyWorkTimes(day('2026-09-02'), source);
-		next.breaks[0].start = '11:00';
-		expect(source.breaks[0].start).toBe('12:00');
+	it('作業内容が入っている日には入れない', () => {
+		const filled = [days[0], day('2026-09-02', { workContent: '設計レビュー' })];
+		expect(suggestContent(filled, 1)).toBeNull();
 	});
 
-	it('作業内容と journal は複製しない', () => {
-		const withContent = { ...source, workContent: '前日の作業', journal: '前日のメモ' };
-		const next = copyWorkTimes(day('2026-09-02'), withContent);
-		expect(next.workContent).toBe('');
-		expect(next.journal).toBe('');
+	it('稼働しない日には入れない', () => {
+		const weekend = [days[0], day('2026-09-05', { dayType: 'weekend' })];
+		expect(suggestContent(weekend, 1)).toBeNull();
+	});
+
+	it('月初では取り出し元がない', () => {
+		expect(suggestContent(days, 0)).toBeNull();
 	});
 });

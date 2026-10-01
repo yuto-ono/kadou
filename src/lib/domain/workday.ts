@@ -1,28 +1,44 @@
-import { breakTotal } from './breaks';
+import { periodSpan, periodTotal } from './periods';
 import { toMinutes } from './time';
-import type { DayRecord, Minutes } from './types';
+import type { DayRecord, Minutes, TimeString } from './types';
 
 /**
- * 日次稼働時間（SPEC.md §5.1）。
+ * 日次の導出値（SPEC.md §5.1）。
  *
- *   稼働時間 = 終了時刻 − 開始時刻 − 休憩合計
+ *   稼働時間 = Σ(period.end − period.start)
+ *   開始時刻 = 最初の稼働区間の start
+ *   終了時刻 = 最後の稼働区間の end
+ *   休憩時間 = 終了時刻 − 開始時刻 − 稼働時間
  *
- * 丸めは行わない。分単位で算出した値をそのまま使う。
+ * 一覧と報告書が同じ規則で求めるよう、ここだけで算出する。丸めは行わない。
  */
-export function dailyWorkMinutes(day: DayRecord): Minutes | null {
-	// 「未入力」と「0 分」を区別する。0 を返すと一覧で 0:00 と表示され、まだ打って
-	// いない日と稼働が 0 分だった日が同じに見える
-	if (day.startTime === null || day.endTime === null) return null;
-	return toMinutes(day.endTime) - toMinutes(day.startTime) - breakTotal(day.breaks);
+export interface DayTimes {
+	start: TimeString;
+	end: TimeString;
+	workMinutes: Minutes;
+	/** 区間が 1 件以下の日と、区間がすべて隣接していて 0 分になる日は null（空欄） */
+	breakMinutes: Minutes | null;
+}
+
+/** 稼働区間がない日は null。「未入力」と「0 分」を区別する */
+export function dayTimes(day: DayRecord): DayTimes | null {
+	const span = periodSpan(day.workPeriods);
+	if (span === null) return null;
+
+	const workMinutes = periodTotal(day.workPeriods);
+	// 区間が重なっていると稼働時間を二重に数え、差が負になる。重なりは検証で
+	// エラーにするので、ここでは 0 分と同じ扱い（空欄）に倒す
+	const gap = toMinutes(span.end) - toMinutes(span.start) - workMinutes;
+	return { ...span, workMinutes, breakMinutes: gap > 0 ? gap : null };
 }
 
 /**
- * 区分にかかわらず、時刻が入っていれば稼働時間として数える。
+ * 日次稼働時間。稼働区間がない日は null。
  *
- * 区分変更時のクリア（SPEC.md §6.1）があるため通常は起こらないが、YAML を手で
- * 編集すれば休日に時刻が残りうる。集計から黙って落とすと、画面の合計とファイル
- * の中身が食い違う。
+ * 区分は見ない。区分変更時のクリア（SPEC.md §6.1）があるため通常は起こらないが、
+ * YAML を手で編集すれば休日に区間が残りうる。集計から黙って落とすと、画面の
+ * 合計とファイルの中身が食い違う。
  */
-export function isCountedAsWork(day: DayRecord): boolean {
-	return day.startTime !== null && day.endTime !== null;
+export function dailyWorkMinutes(day: DayRecord): Minutes | null {
+	return dayTimes(day)?.workMinutes ?? null;
 }

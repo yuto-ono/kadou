@@ -8,6 +8,7 @@
 	import IssueList from '$lib/components/IssueList.svelte';
 	import MonthSelector from '$lib/components/MonthSelector.svelte';
 	import MonthSummary from '$lib/components/MonthSummary.svelte';
+	import TextField from '$lib/components/TextField.svelte';
 	import { CONTRACT_TEMPLATE } from '$lib/persistence/contract-template';
 	import type { DayType } from '$lib/domain/types';
 	import { ContractStore } from '$lib/state/contract.svelte';
@@ -59,7 +60,7 @@
 
 	function closePanel() {
 		// 並べ替えはパネルを閉じたときに行う（SPEC.md §4.3）
-		if (store?.selectedDate) store.sortBreaks(store.selectedDate);
+		if (store?.selectedDate) store.sortPeriods(store.selectedDate);
 		if (store) store.selectedDate = null;
 	}
 </script>
@@ -136,11 +137,13 @@
 				<span class="preview">{store.data.remarks || '報告書のフッタに出力されます'}</span>
 			</summary>
 			<!-- 開いている間は要約行の重複を消す -->
-			<textarea
+			<TextField
 				value={store.data.remarks}
+				label="特記事項"
+				multiline
 				placeholder="下限割れや超過の理由など、客先へ説明することがあれば書く"
-				oninput={(e) => store?.setRemarks(e.currentTarget.value)}
-			></textarea>
+				onCommit={(remarks) => store?.setRemarks(remarks)}
+			/>
 		</details>
 
 		<div class="body">
@@ -149,17 +152,21 @@
 			</div>
 
 			{#if store.selectedDay}
-				<DetailPanel
-					day={store.selectedDay}
-					issues={store.dayIssues[store.selectedDay.date] ?? []}
-					onClose={closePanel}
-					onChange={(patch) => store?.updateDay(store.selectedDate!, patch)}
-					onChangeDayType={(next) => {
-						const date = store!.selectedDate!;
-						if (store!.needsClearConfirm(date, next)) pendingChange = { date, next };
-						else store!.changeDayType(date, next);
-					}}
-				/>
+				<!-- 別の日へ移ったら作り直す。入力途中の区間を持ち越さない（SPEC.md §6.1） -->
+				{#key store.selectedDay.date}
+					<DetailPanel
+						day={store.selectedDay}
+						issues={store.dayIssues[store.selectedDay.date] ?? []}
+						suggestion={store.suggestContent(store.selectedDay.date)}
+						onClose={closePanel}
+						onChange={(patch) => store?.updateDay(store.selectedDate!, patch)}
+						onChangeDayType={(next) => {
+							const date = store!.selectedDate!;
+							if (store!.needsClearConfirm(date, next)) pendingChange = { date, next };
+							else store!.changeDayType(date, next);
+						}}
+					/>
+				{/key}
 			{/if}
 		</div>
 	{/if}
@@ -168,7 +175,7 @@
 {#if pendingChange}
 	<ConfirmDialog
 		title="稼働データを消します"
-		message="この日には開始・終了・休憩が入力されています。区分を変えると、これらをまとめて消します。"
+		message="この日には稼働区間が入力されています。区分を変えると、すべて消します。"
 		confirmLabel="消して変更する"
 		onConfirm={() => {
 			store?.changeDayType(pendingChange!.date, pendingChange!.next);
@@ -244,7 +251,7 @@
 		display: none;
 	}
 
-	.remarks textarea {
+	.remarks :global(textarea) {
 		display: block;
 		width: calc(100% - 2.5rem);
 		min-height: 3.5rem;

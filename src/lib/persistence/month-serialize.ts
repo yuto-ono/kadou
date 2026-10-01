@@ -34,10 +34,8 @@ function serializeDay(day: DayRecord): Record<string, unknown> {
 		dayType: day.dayType
 	};
 
-	if (day.startTime !== DAY_DEFAULTS.startTime) out.startTime = quoted(day.startTime as string);
-	if (day.endTime !== DAY_DEFAULTS.endTime) out.endTime = quoted(day.endTime as string);
-	if (day.breaks.length > 0) {
-		out.breaks = day.breaks.map((b) => ({ start: quoted(b.start), end: quoted(b.end) }));
+	if (day.workPeriods.length > 0) {
+		out.workPeriods = day.workPeriods.map((p) => ({ start: quoted(p.start), end: quoted(p.end) }));
 	}
 	if (day.workContent !== DAY_DEFAULTS.workContent) out.workContent = day.workContent;
 	if (day.journal !== DAY_DEFAULTS.journal) out.journal = blockLiteral(day.journal);

@@ -1,9 +1,8 @@
-import { breakTotal } from './breaks';
 import { weekdayLabel } from './calendar';
 import { summarize, workedDays } from './summary';
 import { formatDuration, toReportTime } from './time';
 import type { DateString, MonthData } from './types';
-import { dailyWorkMinutes } from './workday';
+import { dayTimes } from './workday';
 
 /**
  * 報告書のビューモデル（SPEC.md §7.1）。
@@ -71,8 +70,8 @@ export function buildReport(month: MonthData): ReportModel {
 
 function buildRow(day: MonthData['days'][number]): ReportRow {
 	const weekday = weekdayLabel(day.date);
-	const minutes = dailyWorkMinutes(day);
-	const breakMinutes = breakTotal(day.breaks);
+	// 開始・終了・休憩・稼働時間は稼働区間からの導出値。区間そのものは列挙しない
+	const times = dayTimes(day);
 
 	return {
 		date: day.date,
@@ -80,11 +79,11 @@ function buildRow(day: MonthData['days'][number]): ReportRow {
 		weekday,
 		isWeekend: weekday === '土' || weekday === '日',
 		// 24 時超えは翌日表記へ変換する。開始時刻は 0:00〜23:59 に限られるため対象外
-		start: day.startTime ?? '',
-		end: day.endTime === null ? '' : toReportTime(day.endTime),
+		start: times?.start ?? '',
+		end: times === null ? '' : toReportTime(times.end),
 		// 休憩がない日は空欄にする（SPEC.md §7.1）
-		breakTime: breakMinutes > 0 ? formatDuration(breakMinutes) : '',
-		workTime: minutes === null ? '' : formatDuration(minutes),
+		breakTime: times?.breakMinutes == null ? '' : formatDuration(times.breakMinutes),
+		workTime: times === null ? '' : formatDuration(times.workMinutes),
 		workContent: day.workContent
 	};
 }

@@ -8,14 +8,10 @@ import type { Issue } from './validate/issue';
  * 変えてもドメインのテストが壊れないようにするため。
  */
 const TEMPLATES: Record<Issue['code'], (p: Record<string, string | number>) => string> = {
-	startTimeOutOfRange: () => '開始時刻は 0:00〜23:59 で入力してください',
-	endTimeBeforeStart: () => '終了時刻は開始時刻より後にしてください',
-	endTimeOverMax: (p) => `終了時刻は ${p.max} までです`,
-	breakZeroLength: () => '休憩の終了は開始より後にしてください',
-	breakOutsideWork: () => '休憩は稼働時間帯の中に収めてください',
-	breakOverlap: () => '休憩の区間が重なっています',
-	breakTotalTooLong: () => '休憩の合計が稼働時間帯を超えています',
-	breakWithoutWorkTime: () => '開始時刻と終了時刻を入力すると休憩を扱えます',
+	periodStartOutOfRange: () => '最初の区間の開始は 0:00〜23:59 で入力してください',
+	periodEndNotAfterStart: () => '終了は開始より後にしてください',
+	periodEndOverMax: (p) => `終了時刻は ${p.max} までです`,
+	periodOverlap: () => '区間が重なっています',
 	workContentTooLong: (p) => `作業内容は ${p.max ?? WORK_CONTENT_MAX} 文字以内です`,
 	contractNameEmpty: () => '空にできません',
 	contractRangeInverted: () => '精算幅の下限が上限を超えています',
@@ -24,7 +20,9 @@ const TEMPLATES: Record<Issue['code'], (p: Record<string, string | number>) => s
 	fileMonthMismatch: (p) => `ファイル名と month（${p.month}）が一致しません`,
 	fileUnknownDate: (p) => `この月に属さない日付を読み飛ばしました: ${p.date}`,
 	fileDuplicateDate: (p) => `同じ日付が複数あります: ${p.date}`,
-	fileFieldDropped: (p) => `${p.field} の値を解釈できず、既定値に戻しました`
+	fileFieldDropped: (p) => `${p.field} の値を解釈できず、既定値に戻しました`,
+	fileLegacyField: (p) =>
+		`旧形式の ${p.field} は読み込みません。移行スクリプトで workPeriods へ変換してください`
 };
 
 export function messageOf(issue: Issue): string {

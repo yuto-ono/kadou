@@ -24,8 +24,8 @@ export type DayType = 'work' | 'weekend' | 'holiday' | 'personal' | 'clientClose
 /** 稼働予定日にカウントされる区分（SPEC.md §4.2） */
 export type NonWorkDayType = Exclude<DayType, 'work'>;
 
-/** 休憩区間（SPEC.md §4.3） */
-export interface Break {
+/** 稼働区間（SPEC.md §4.3）。start と end はどちらも必須 */
+export interface WorkPeriod {
 	start: TimeString;
 	end: TimeString;
 }
@@ -34,9 +34,8 @@ export interface Break {
 export interface DayRecord {
 	date: DateString;
 	dayType: DayType;
-	startTime: TimeString | null;
-	endTime: TimeString | null;
-	breaks: Break[];
+	/** 稼働しない日は空配列。開始・終了・休憩はここから導出する（SPEC.md §5.1） */
+	workPeriods: WorkPeriod[];
 	/** 報告書の明細表に出る。改行なしの 1 行、30 文字以内 */
 	workContent: string;
 	/** 自分用のメモ。報告書には出力しない */

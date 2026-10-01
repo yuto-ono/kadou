@@ -36,21 +36,20 @@ describe('明細表', () => {
 
 	it('24 時超えの終了時刻を翌日表記へ変換する', () => {
 		const m = september();
-		setDay(m, '2026-09-01', { startTime: '13:00', endTime: '26:00' });
+		setDay(m, '2026-09-01', { workPeriods: [{ start: '13:00', end: '26:00' }] });
 		expect(rowOf(m, '2026-09-01')).toMatchObject({ start: '13:00', end: '翌2:00' });
 	});
 
 	it('休憩は合計のみを出し、ない日は空欄にする', () => {
 		const m = september();
 		setDay(m, '2026-09-01', {
-			startTime: '09:00',
-			endTime: '19:00',
-			breaks: [
-				{ start: '12:00', end: '13:00' },
-				{ start: '15:00', end: '15:15' }
+			workPeriods: [
+				{ start: '09:00', end: '12:00' },
+				{ start: '13:00', end: '15:00' },
+				{ start: '15:15', end: '19:00' }
 			]
 		});
-		setDay(m, '2026-09-02', { startTime: '09:00', endTime: '18:00' });
+		setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '18:00' }] });
 		expect(rowOf(m, '2026-09-01').breakTime).toBe('1:15');
 		expect(rowOf(m, '2026-09-02').breakTime).toBe('');
 	});
@@ -87,8 +86,13 @@ describe('明細表', () => {
 describe('フッタ', () => {
 	it('稼働日数と合計稼働時間を出す', () => {
 		const m = september();
-		setDay(m, '2026-09-01', { startTime: '09:00', endTime: '19:00', breaks: [{ start: '12:00', end: '13:00' }] });
-		setDay(m, '2026-09-02', { startTime: '09:00', endTime: '18:00' });
+		setDay(m, '2026-09-01', {
+			workPeriods: [
+				{ start: '09:00', end: '12:00' },
+				{ start: '13:00', end: '19:00' }
+			]
+		});
+		setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '18:00' }] });
 		const f = buildReport(m).footer;
 		expect(f.workedDays).toBe(2);
 		expect(f.totalWorkTime).toBe('18:00');
@@ -101,23 +105,23 @@ describe('フッタ', () => {
 	it('超過・不足を出し、どちらでもなければ「なし」', () => {
 		const m = september();
 		m.contract = { ...m.contract, lowerHours: 8, upperHours: 16 };
-		setDay(m, '2026-09-01', { startTime: '06:00', endTime: '23:00' });
+		setDay(m, '2026-09-01', { workPeriods: [{ start: '06:00', end: '23:00' }] });
 		expect(buildReport(m).footer.difference).toBe('1:00 超過');
 
 		const short = september();
 		short.contract = { ...short.contract, lowerHours: 8, upperHours: 16 };
-		setDay(short, '2026-09-01', { startTime: '09:00', endTime: '15:00' });
+		setDay(short, '2026-09-01', { workPeriods: [{ start: '09:00', end: '15:00' }] });
 		expect(buildReport(short).footer.difference).toBe('2:00 不足');
 
 		const inside = september();
 		inside.contract = { ...inside.contract, lowerHours: 8, upperHours: 16 };
-		setDay(inside, '2026-09-01', { startTime: '09:00', endTime: '19:00' });
+		setDay(inside, '2026-09-01', { workPeriods: [{ start: '09:00', end: '19:00' }] });
 		expect(buildReport(inside).footer.difference).toBe('なし');
 	});
 
 	it('合計は 3 桁の時間も出せる', () => {
 		const m = september();
-		for (const d of m.days) setDay(m, d.date, { startTime: '09:00', endTime: '17:00' });
+		for (const d of m.days) setDay(m, d.date, { workPeriods: [{ start: '09:00', end: '17:00' }] });
 		expect(buildReport(m).footer.totalWorkTime).toBe('240:00');
 	});
 

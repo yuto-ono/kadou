@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { day, workDay } from '../testing';
-import type { Break, DayRecord } from '../types';
+import type { DayRecord } from '../types';
 import { contentLength, validateDay } from './day';
 
 const codes = (d: DayRecord, maxEndTime = '28:00') => validateDay(d, maxEndTime).map((i) => i.code);
-const b = (start: string, end: string): Break => ({ start, end });
 
 describe('作業内容', () => {
 	it('30 文字までは通す', () => {
@@ -21,67 +20,56 @@ describe('作業内容', () => {
 	});
 });
 
-describe('開始時刻', () => {
-	it('0:00〜23:59 の範囲を外れたら違反', () => {
-		expect(codes(day('2026-09-01', { startTime: '23:59', endTime: '24:00' }))).toEqual([]);
-		expect(codes(day('2026-09-01', { startTime: '24:00', endTime: '25:00' }))).toContain('startTimeOutOfRange');
-	});
-});
-
-describe('終了時刻', () => {
-	it('maxEndTime を超えたら違反', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '28:00'))).toEqual([]);
-		expect(codes(workDay('2026-09-01', '09:00', '28:30'))).toContain('endTimeOverMax');
+describe('稼働区間', () => {
+	it('稼働区間がない日は検証しない', () => {
+		expect(codes(day('2026-09-01'))).toEqual([]);
 	});
 
-	it('maxEndTime は引数で受けた値に従う', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '26:00'), '24:00')).toContain('endTimeOverMax');
-	});
-
-	it('開始時刻と同じなら違反（稼働 0 分を認めない）', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '09:00'))).toContain('endTimeBeforeStart');
-	});
-
-	it('開始時刻より前なら違反', () => {
-		expect(codes(workDay('2026-09-01', '18:00', '09:00'))).toContain('endTimeBeforeStart');
-	});
-});
-
-describe('休憩区間', () => {
-	it('長さ 0 の区間は認めない', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('12:00', '12:00')]))).toContain('breakZeroLength');
-	});
-
-	it('稼働時間帯の外には置けない', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('08:00', '08:30')]))).toContain('breakOutsideWork');
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('17:30', '18:30')]))).toContain('breakOutsideWork');
-	});
-
-	it('端に接する区間は許容する', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('09:00', '09:30')]))).toEqual([]);
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('17:30', '18:00')]))).toEqual([]);
+	it('終了が開始と同じか前なら違反（長さ 0 を認めない）', () => {
+		expect(codes(workDay('2026-09-01', ['09:00', '09:00']))).toContain('periodEndNotAfterStart');
+		expect(codes(workDay('2026-09-01', ['18:00', '09:00']))).toContain('periodEndNotAfterStart');
 	});
 
 	it('隣接は許容し、重なりは違反', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('12:00', '13:00'), b('13:00', '13:30')]))).toEqual([]);
-		expect(codes(workDay('2026-09-01', '09:00', '18:00', [b('12:00', '13:00'), b('12:30', '13:30')]))).toContain('breakOverlap');
+		expect(codes(workDay('2026-09-01', ['09:00', '12:00'], ['12:00', '18:00']))).toEqual([]);
+		expect(codes(workDay('2026-09-01', ['09:00', '13:00'], ['12:30', '18:00']))).toEqual([
+			'periodOverlap',
+			'periodOverlap'
+		]);
 	});
 
-	it('休憩合計が稼働時間帯以上なら違反', () => {
-		expect(codes(workDay('2026-09-01', '09:00', '10:00', [b('09:00', '10:00')]))).toContain('breakTotalTooLong');
+	it('重なりは関わる両方の区間に出す', () => {
+		const issues = validateDay(workDay('2026-09-01', ['09:00', '13:00'], ['12:30', '18:00']), '28:00');
+		expect(issues.map((i) => i.target.periodIndex)).toEqual([0, 1]);
 	});
 
-	it('時刻が未入力の日は稼働時間帯が定まらない', () => {
-		const d = day('2026-09-01', { breaks: [b('12:00', '13:00')] });
-		expect(codes(d)).toEqual(['breakWithoutWorkTime']);
+	it('最も早い区間の開始は 0:00〜23:59', () => {
+		expect(codes(workDay('2026-09-01', ['23:59', '24:30']))).toEqual([]);
+		expect(codes(workDay('2026-09-01', ['24:00', '25:00']))).toEqual(['periodStartOutOfRange']);
 	});
 
-	it('24 時超えの位置の休憩を扱える', () => {
-		expect(codes(workDay('2026-09-01', '13:00', '26:00', [b('25:00', '25:30')]))).toEqual([]);
+	it('2 件目以降の開始には範囲の制約を設けない', () => {
+		expect(codes(workDay('2026-09-01', ['13:00', '24:00'], ['25:00', '26:00']))).toEqual([]);
+	});
+
+	it('最も早い区間は並べた順で判定する', () => {
+		const issues = validateDay(workDay('2026-09-01', ['25:00', '26:00'], ['24:10', '24:50']), '28:00');
+		expect(issues).toEqual([
+			{ code: 'periodStartOutOfRange', target: { date: '2026-09-01', periodIndex: 1 } }
+		]);
+	});
+
+	it('すべての区間の終了は maxEndTime 以下', () => {
+		expect(codes(workDay('2026-09-01', ['20:00', '28:00']))).toEqual([]);
+		expect(codes(workDay('2026-09-01', ['20:00', '28:30']))).toEqual(['periodEndOverMax']);
+	});
+
+	it('maxEndTime は引数で受けた値に従う', () => {
+		expect(codes(workDay('2026-09-01', ['13:00', '26:00']), '24:00')).toContain('periodEndOverMax');
 	});
 
 	it('違反した区間の添字を返す', () => {
-		const issues = validateDay(workDay('2026-09-01', '09:00', '18:00', [b('12:00', '13:00'), b('08:00', '08:30')]), '28:00');
-		expect(issues[0].target).toEqual({ date: '2026-09-01', breakIndex: 1 });
+		const issues = validateDay(workDay('2026-09-01', ['09:00', '12:00'], ['13:00', '12:30']), '28:00');
+		expect(issues[0].target).toEqual({ date: '2026-09-01', periodIndex: 1 });
 	});
 });

@@ -7,5 +7,6 @@ contract:
 days:
   - date: 2026-09-01
     dayType: work
-    startTime: 12:00
-    endTime: 21:30
+    workPeriods:
+      - start: 12:00
+        end: 21:30

@@ -3,17 +3,25 @@ import { isDateString, isWeekend, monthOf } from '$lib/domain/calendar';
 import { CONTRACT_DEFAULTS, DAY_DEFAULTS, DAY_TYPES } from '$lib/domain/defaults';
 import { fromMinutes, isTimeString, parseTimeInput } from '$lib/domain/time';
 import type {
-	Break,
 	ContractSnapshot,
 	DayRecord,
 	DayType,
 	MonthData,
 	MonthString,
-	TimeString
+	TimeString,
+	WorkPeriod
 } from '$lib/domain/types';
 import { issue, type Issue } from '$lib/domain/validate/issue';
 import { normalizeMonth } from './normalize';
 import { stripOneTrailingNewline } from './scalars';
+
+/**
+ * 外枠と休憩で時刻を持っていた旧形式のフィールド（SPEC.md §4.5）。
+ *
+ * 読み込まないが、黙って捨てると移行し忘れた月の時刻が消えたように見えるので、
+ * 残っていれば報告する。
+ */
+const LEGACY_FIELDS = ['startTime', 'endTime', 'breaks'] as const;
 
 /** YAML として構文レベルで読めなかった場合。呼び出し側は 422 として扱う */
 export class MonthSyntaxError extends Error {}
@@ -46,6 +54,7 @@ export function parseMonth(text: string, expectedMonth: MonthString): ParsedMont
 	}
 
 	const seen = new Set<string>();
+	const legacy = new Set<string>();
 	const days: DayRecord[] = [];
 	for (const entry of Array.isArray(root.days) ? root.days : []) {
 		if (!isRecord(entry)) continue;
@@ -61,6 +70,13 @@ export function parseMonth(text: string, expectedMonth: MonthString): ParsedMont
 		}
 		seen.add(date);
 		days.push(readDay(date, entry, issues));
+		for (const field of LEGACY_FIELDS) if (field in entry) legacy.add(field);
+	}
+
+	// 日ごとに出すと月の大半の日が並ぶので、ファイルにつき 1 件にまとめる
+	if (legacy.size > 0) {
+		const field = [...legacy].join(' / ');
+		issues.push(issue('fileLegacyField', { field: 'days' }, { field }));
 	}
 
 	return {
@@ -75,14 +91,10 @@ export function parseMonth(text: string, expectedMonth: MonthString): ParsedMont
 }
 
 function readDay(date: string, entry: Record<string, unknown>, issues: Issue[]): DayRecord {
-	const at = (field: string) => ({ date, field });
-
 	return {
 		date,
 		dayType: readDayType(entry.dayType, date, issues),
-		startTime: readTime(entry.startTime, at('startTime'), issues),
-		endTime: readTime(entry.endTime, at('endTime'), issues),
-		breaks: readBreaks(entry.breaks, date, issues),
+		workPeriods: readPeriods(entry.workPeriods, date, issues),
 		workContent: readText(entry.workContent),
 		journal: readText(entry.journal),
 		contentAutoFilled: entry.contentAutoFilled === true
@@ -99,23 +111,34 @@ function readDayType(value: unknown, date: string, issues: Issue[]): DayType {
 	return isWeekend(date) ? 'weekend' : 'work';
 }
 
-function readBreaks(value: unknown, date: string, issues: Issue[]): Break[] {
+/**
+ * 稼働区間の読み込み。start と end のどちらかが欠けた区間は落として報告する。
+ * データには完成した区間だけを置く（SPEC.md §4.3）。
+ */
+function readPeriods(value: unknown, date: string, issues: Issue[]): WorkPeriod[] {
+	const target = { date, field: 'workPeriods' };
 	if (!Array.isArray(value)) {
 		if (value !== undefined && value !== null) {
-			issues.push(issue('fileFieldDropped', { date, field: 'breaks' }, { field: 'breaks' }));
+			issues.push(issue('fileFieldDropped', target, { field: 'workPeriods' }));
 		}
 		return [];
 	}
 
-	const breaks: Break[] = [];
+	const periods: WorkPeriod[] = [];
 	for (const entry of value) {
-		if (!isRecord(entry)) continue;
-		const start = readTime(entry.start, { date, field: 'breaks' }, issues);
-		const end = readTime(entry.end, { date, field: 'breaks' }, issues);
-		if (start === null || end === null) continue;
-		breaks.push({ start, end });
+		const reported = issues.length;
+		const start = isRecord(entry) ? readTime(entry.start, target, issues) : null;
+		const end = isRecord(entry) ? readTime(entry.end, target, issues) : null;
+		if (start === null || end === null) {
+			// 解釈できない時刻は readTime が報告済み。欠けていた場合だけここで報告する
+			if (issues.length === reported) {
+				issues.push(issue('fileFieldDropped', target, { field: 'workPeriods' }));
+			}
+			continue;
+		}
+		periods.push({ start, end });
 	}
-	return breaks;
+	return periods;
 }
 
 function readContract(value: unknown, issues: Issue[]): ContractSnapshot {

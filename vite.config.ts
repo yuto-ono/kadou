@@ -10,7 +10,7 @@ export default defineConfig({
 
 	// domain/ と persistence/ は純粋 TS なので、ブラウザ環境を用意しない
 	test: {
-		include: ['src/**/*.test.ts'],
+		include: ['src/**/*.test.ts', 'scripts/**/*.test.ts'],
 		environment: 'node'
 	}
 });

@@ -65,11 +65,11 @@ describe('emptyDay', () => {
 		expect(emptyDay('2026-09-07').dayType).toBe('work');
 	});
 
-	it('breaks は日ごとに別の配列になる', () => {
+	it('workPeriods は日ごとに別の配列になる', () => {
 		const a = emptyDay('2026-09-01');
 		const b = emptyDay('2026-09-02');
-		a.breaks.push({ start: '12:00', end: '13:00' });
-		expect(b.breaks).toEqual([]);
+		a.workPeriods.push({ start: '09:00', end: '18:00' });
+		expect(b.workPeriods).toEqual([]);
 	});
 });
 

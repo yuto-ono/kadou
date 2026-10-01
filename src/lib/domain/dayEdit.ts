@@ -16,7 +16,7 @@ import type { DayRecord, DayType } from './types';
  */
 export function needsClearConfirm(day: DayRecord, next: DayType): boolean {
 	if (day.dayType !== 'work' || next === 'work') return false;
-	return day.startTime !== null || day.endTime !== null || day.breaks.length > 0;
+	return day.workPeriods.length > 0;
 }
 
 /**
@@ -30,7 +30,7 @@ export function applyDayTypeChange(day: DayRecord, next: DayType): DayRecord {
 	const cleared =
 		next === 'work'
 			? day
-			: { ...day, startTime: null, endTime: null, breaks: [] };
+			: { ...day, workPeriods: [] };
 
 	if (next === 'work') {
 		return {
@@ -52,29 +52,21 @@ export function applyDayTypeChange(day: DayRecord, next: DayType): DayRecord {
 }
 
 /**
- * 「前日をコピー」の複製元（SPEC.md §6.1）。
+ * 空欄の作業内容へフォーカスしたときに入れる前回の内容（SPEC.md §6.1「入力補助」）。
  *
- * 同じ月の中で当該日より前にあり、開始時刻が入力されている最も近い日。月をまたい
- * だ複製は行わない。
+ * 対象は作業内容が空欄の稼働日だけ。稼働しない日に入れると、Enter で次の日へ
+ * 進むだけで土日にも前回の内容が保存されてしまう。
+ *
+ * 同じ月の中で当該日より前にあり、手入力された作業内容を持つ最も近い日から取る。
+ * 区分変更で自動入力された文言（祝日・休暇・客先休業）は取り出し元にしない。
+ * 月はまたがない。該当する日がなければ null。
  */
-export function findPreviousWorkday(days: DayRecord[], index: number): DayRecord | null {
+export function suggestContent(days: DayRecord[], index: number): string | null {
+	const target = days[index];
+	if (target === undefined || target.dayType !== 'work' || target.workContent !== '') return null;
+
 	for (let i = index - 1; i >= 0; i--) {
-		if (days[i].startTime !== null) return days[i];
+		if (days[i].workContent !== '' && !days[i].contentAutoFilled) return days[i].workContent;
 	}
 	return null;
-}
-
-/**
- * 開始・終了・休憩だけを複製する。
- *
- * 作業内容と journal は複製しない。どちらもその日固有の内容で、複製すると前日の
- * 記述が残ったまま提出される事故につながる（SPEC.md §6.1）。
- */
-export function copyWorkTimes(target: DayRecord, source: DayRecord): DayRecord {
-	return {
-		...target,
-		startTime: source.startTime,
-		endTime: source.endTime,
-		breaks: source.breaks.map((b) => ({ ...b }))
-	};
 }

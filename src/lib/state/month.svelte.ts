@@ -1,16 +1,11 @@
 import { fetchMonth, NotFoundError, saveMonth } from '$lib/client/api';
 import { today } from '$lib/client/clock';
 import { createDebouncedWriter, type DebouncedWriter } from '$lib/client/debounce';
-import { sortBreaks } from '$lib/domain/breaks';
 import { emptyMonth, toSnapshot } from '$lib/domain/calendar';
-import {
-	applyDayTypeChange,
-	copyWorkTimes,
-	findPreviousWorkday,
-	needsClearConfirm
-} from '$lib/domain/dayEdit';
+import { applyDayTypeChange, suggestContent, needsClearConfirm } from '$lib/domain/dayEdit';
+import { sortPeriods } from '$lib/domain/periods';
 import { summarize, type MonthSummary } from '$lib/domain/summary';
-import type { Break, Contract, DayRecord, DayType, MonthData } from '$lib/domain/types';
+import type { Contract, DayRecord, DayType, MonthData, WorkPeriod } from '$lib/domain/types';
 import { validateDay } from '$lib/domain/validate/day';
 import type { Issue } from '$lib/domain/validate/issue';
 
@@ -108,32 +103,24 @@ export class MonthStore {
 		this.#replaceDay(date, (day) => applyDayTypeChange(day, next));
 	}
 
-	setBreaks(date: string, breaks: Break[]): void {
-		this.#replaceDay(date, (day) => ({ ...day, breaks }));
+	setPeriods(date: string, workPeriods: WorkPeriod[]): void {
+		this.#replaceDay(date, (day) => ({ ...day, workPeriods }));
 	}
 
 	/**
-	 * 休憩区間を start の昇順へ並べる。
+	 * 稼働区間を start の昇順へ並べる。
 	 *
 	 * 詳細パネルを閉じたときに呼ぶ。入力の途中で並べ替えると、時刻を打っている最中に
 	 * 行が動いてフォーカスが外れる（SPEC.md §4.3）。
 	 */
-	sortBreaks(date: string): void {
-		this.#replaceDay(date, (day) => ({ ...day, breaks: sortBreaks(day.breaks) }));
+	sortPeriods(date: string): void {
+		this.#replaceDay(date, (day) => ({ ...day, workPeriods: sortPeriods(day.workPeriods) }));
 	}
 
-	/** 「前日をコピー」の複製元。null なら操作を無効にする（SPEC.md §6.1） */
-	previousWorkday(date: string): DayRecord | null {
+	/** 空欄の作業内容へフォーカスしたときに入れる前回の内容（SPEC.md §6.1「入力補助」） */
+	suggestContent(date: string): string | null {
 		if (this.data === null) return null;
-		const index = this.data.days.findIndex((d) => d.date === date);
-		return index < 0 ? null : findPreviousWorkday(this.data.days, index);
-	}
-
-	copyPreviousWorkday(date: string): boolean {
-		const source = this.previousWorkday(date);
-		if (source === null) return false;
-		this.#replaceDay(date, (day) => copyWorkTimes(day, source));
-		return true;
+		return suggestContent(this.data.days, this.data.days.findIndex((d) => d.date === date));
 	}
 
 	setRemarks(remarks: string): void {

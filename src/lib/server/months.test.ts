@@ -29,9 +29,10 @@ function september(): MonthData {
 	});
 	m.days[0] = {
 		...m.days[0],
-		startTime: '09:30',
-		endTime: '19:00',
-		breaks: [{ start: '12:00', end: '13:00' }],
+		workPeriods: [
+			{ start: '09:30', end: '12:00' },
+			{ start: '13:00', end: '19:00' }
+		],
 		workContent: '認証: 基盤の改修',
 		journal: 'メモ\n- 続き'
 	};
