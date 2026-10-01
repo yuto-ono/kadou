@@ -37,7 +37,7 @@
 			<th class="time">終了</th>
 			<th class="num">休憩</th>
 			<th class="num">稼働</th>
-			<th class="content">作業内容</th>
+			<th class="content">作業内容・備考</th>
 		</tr>
 	</thead>
 	<tbody>

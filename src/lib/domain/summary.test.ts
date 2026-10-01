@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { emptyMonth } from './calendar';
 import { CONTRACT_DEFAULTS } from './defaults';
-import { summarize, workedDays } from './summary';
+import { summarize } from './summary';
 import type { DayType, MonthData } from './types';
 
 /** 2026-09 は 30 日。平日 22 日、土日 8 日 */
@@ -134,15 +134,5 @@ describe('summarize', () => {
 			expect(s.overMinutes).toBe(0);
 			expect(s.shortMinutes).toBe(0);
 		});
-	});
-});
-
-describe('workedDays', () => {
-	it('稼働時間が記録された日を数える', () => {
-		const m = september();
-		setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '18:00' }] });
-		setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '18:00' }] });
-		setDay(m, '2026-09-03', { dayType: 'holiday' });
-		expect(workedDays(m)).toBe(2);
 	});
 });

@@ -71,8 +71,3 @@ export function summarize(month: MonthData, today: DateString): MonthSummary {
 		breakdown
 	};
 }
-
-/** 報告書のフッタに出す稼働日数。稼働時間が記録された日を数える（SPEC.md §7.1） */
-export function workedDays(month: MonthData): number {
-	return month.days.filter((d) => dailyWorkMinutes(d) !== null).length;
-}

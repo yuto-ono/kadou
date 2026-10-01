@@ -14,12 +14,8 @@
 		<div>
 			<h1>{report.title}</h1>
 			<dl class="meta">
-				<dt>対象期間</dt>
-				<dd>{report.period}</dd>
-				<dt>氏名</dt>
-				<dd>{report.workerName}</dd>
-				<dt>客先</dt>
-				<dd>{report.clientName}</dd>
+				<div><dt>対象月</dt><dd>{report.targetMonth}</dd></div>
+				<div><dt>氏名</dt><dd>{report.workerName}</dd></div>
 			</dl>
 		</div>
 		<!-- 押印や署名は印刷後に手書きで行う。中身は出力しない（SPEC.md §7.1） -->
@@ -37,13 +33,13 @@
 				<th class="col-end">終了</th>
 				<th class="col-break">休憩</th>
 				<th class="col-work">稼働時間</th>
-				<th>作業内容</th>
+				<th>作業内容・備考</th>
 			</tr>
 		</thead>
 		<tbody>
 			<!-- 1 日〜末日の全日を出す。休んだ日と稼働がなかった日を区別するため -->
 			{#each report.rows as row (row.date)}
-				<tr class:weekend={row.isWeekend}>
+				<tr class:rest={row.isRestDay}>
 					<td class="num">{row.day}</td>
 					<td class="center">{row.weekday}</td>
 					<td class="center">{row.start}</td>
@@ -54,16 +50,17 @@
 				</tr>
 			{/each}
 		</tbody>
+		<!-- 合計は稼働時間列の真下に置き、どの列の合計かを位置で示す -->
+		<tfoot>
+			<tr class="total">
+				<th colspan="5">合計稼働時間</th>
+				<td class="num"><div class="total-value">{report.footer.totalWorkTime}</div></td>
+				<td class="total-blank"></td>
+			</tr>
+		</tfoot>
 	</table>
 
 	<footer class="sheet-footer">
-		<dl class="totals">
-			<div><dt>稼働日数</dt><dd>{report.footer.workedDays}日</dd></div>
-			<div><dt>合計稼働時間</dt><dd>{report.footer.totalWorkTime}</dd></div>
-			<div><dt>精算幅</dt><dd>{report.footer.settlementRange}</dd></div>
-			<div><dt>超過・不足</dt><dd>{report.footer.difference}</dd></div>
-		</dl>
-
 		<!-- 空のときは欄ごと省略する（SPEC.md §7.1） -->
 		{#if report.footer.remarks !== ''}
 			<div class="remarks">

@@ -105,7 +105,7 @@
 			<TextField
 				id="content-{day.date}"
 				value={day.workContent}
-				label="{day.date} の作業内容"
+				label="{day.date} の作業内容・備考"
 				maxLength={WORK_CONTENT_MAX}
 				quiet
 				invalid={contentInvalid}

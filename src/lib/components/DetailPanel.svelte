@@ -80,12 +80,12 @@
 	<section class="block">
 		<div class="field">
 			<span class="label">
-				作業内容
+				作業内容・備考
 				<small class="count tnum" class:over={remaining < 0}>残り {remaining}</small>
 			</span>
 			<TextField
 				value={day.workContent}
-				label="作業内容"
+				label="作業内容・備考"
 				maxLength={WORK_CONTENT_MAX}
 				placeholder="報告書の明細表に出ます"
 				invalid={contentIssues.length > 0}
