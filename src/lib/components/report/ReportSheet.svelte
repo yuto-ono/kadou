@@ -70,3 +70,246 @@
 		{/if}
 	</footer>
 </div>
+
+<style>
+	/*
+	 * 報告書の印刷レイアウト（SPEC.md §7）。
+	 *
+	 * PDF 生成ライブラリは使わず、印刷 CSS で組む。OS のフォントがそのまま使え、
+	 * 日本語フォントを自前で埋め込む必要がない（SPEC.md §7.2）。
+	 *
+	 * 寸法の根拠は SPEC.md §7.3。数値は実測して確定させてある。
+	 *
+	 * スタイルはこのコンポーネントに閉じ込める。SvelteKit は画面を移っても読み込んだ
+	 * CSS を外さないため、グローバルに置くと稼働入力の画面へ漏れる。
+	 */
+
+	.sheet {
+		--page-width: 210mm;
+		--page-height: 297mm;
+		--margin-x: 10mm;
+		--margin-y: 15mm;
+		--row-height: 5.6mm;
+		--font-size: 9pt;
+		--content-font-size: 8pt;
+
+		/* 白黒だけでは読みにくいため、ブルー系をアクセントに使う */
+		--ink: #1a1d23;
+		--accent: #1f4e8c;
+		--accent-soft: #e9f0f9;
+		--rule: #9fb3cc;
+		--rest: #f4f6f9;
+
+		box-sizing: border-box;
+		width: var(--page-width);
+		min-height: var(--page-height);
+		margin: 0 auto;
+		padding: var(--margin-y) var(--margin-x);
+		background: #fff;
+		color: var(--ink);
+		font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+		font-size: var(--font-size);
+		line-height: 1.3;
+		/* 既定では印刷時に背景色が落ちる。見出し行や土日・祝日の帯を残す */
+		print-color-adjust: exact;
+		-webkit-print-color-adjust: exact;
+	}
+
+	/* --- ヘッダ（SPEC.md §7.1） --- */
+
+	.sheet-header {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 8mm;
+		margin-bottom: 4mm;
+	}
+
+	.sheet h1 {
+		margin: 0 0 3mm;
+		padding-bottom: 1mm;
+		border-bottom: 0.6mm solid var(--accent);
+		color: var(--accent);
+		font-size: 16pt;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1mm 8mm;
+		margin: 0;
+		font-size: 11pt;
+	}
+
+	.meta div {
+		display: flex;
+		gap: 3mm;
+	}
+
+	.meta dt {
+		color: var(--accent);
+		font-weight: 600;
+		white-space: nowrap;
+	}
+
+	.meta dd {
+		margin: 0;
+	}
+
+	/* 承認確認欄。枠は 1 つだけで、内部をセルに分割しない（SPEC.md §7.1） */
+	.approval {
+		display: flex;
+		flex: none;
+		flex-direction: column;
+		width: 40mm;
+		height: 18mm;
+		border: 0.3mm solid var(--accent);
+	}
+
+	.approval-label {
+		padding: 0.5mm 0;
+		border-bottom: 0.3mm solid var(--accent);
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 7pt;
+		text-align: center;
+	}
+
+	/* --- 明細表（SPEC.md §7.1） --- */
+
+	.detail {
+		width: 100%;
+		border-collapse: collapse;
+		table-layout: fixed;
+	}
+
+	/* 横罫だけだと列の区切りが追いにくいため、全列に縦罫を引く */
+	.detail th,
+	.detail td {
+		height: var(--row-height);
+		padding: 0 1.2mm;
+		border: 0.2mm solid var(--rule);
+		overflow-wrap: break-word;
+	}
+
+	.detail thead th {
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-weight: 600;
+		text-align: center;
+	}
+
+	.detail td:last-child {
+		padding-left: 2mm;
+	}
+
+	/* 稼働のない日は数値欄が空になる。日付の連続性だけ残し、印象を落とす */
+	.detail tr.rest td {
+		background: var(--rest);
+		color: #5b6270;
+	}
+
+	/*
+	 * 列幅（SPEC.md §7.3）。A4 幅 210mm − 左右余白 20mm = 190mm。
+	 * 見出しが折り返さない幅を確保したうえで、作業内容に 8pt の全角 38 文字が
+	 * 収まる幅を残す。終了列は最長の「翌23:59」に合わせる。
+	 */
+	.col-date { width: 9mm; }
+	.col-weekday { width: 9mm; }
+	.col-start { width: 13mm; }
+	.col-end { width: 15mm; }
+	.col-break { width: 13mm; }
+	.col-work { width: 17mm; }
+	/* 作業内容は残り全部 */
+
+	.detail td.num {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+
+	/* 稼働時間は合計の根拠になる列なので、少しだけ強くする */
+	.detail td.worked {
+		font-weight: 600;
+	}
+
+	.detail td.center {
+		text-align: center;
+	}
+
+	/* 作業内容だけ一段小さくし、全角 38 文字を 1 行に収める（SPEC.md §7.3） */
+	.detail td.content {
+		font-size: var(--content-font-size);
+	}
+
+	/* --- フッタ（SPEC.md §7.1） --- */
+
+	.sheet-footer {
+		margin-top: 3mm;
+	}
+
+	/*
+	 * 合計行は 31 行の行高制約（SPEC.md §7.3）の外にあるので、数値を大きく出せる。
+	 * 罫線は引かず、稼働時間列の右端に揃えることで、どの列の合計かを示す。
+	 */
+	.detail tr.total th,
+	.detail tr.total td {
+		height: 8mm;
+		border: none;
+	}
+
+	.detail tr.total th {
+		padding-right: 3mm;
+		color: var(--accent);
+		font-weight: 600;
+		text-align: right;
+	}
+
+	.detail tr.total td.num {
+		font-size: 11pt;
+		font-weight: 700;
+	}
+
+	/* 列幅を超える桁数でも右端は列に揃え、余りは左の余白へはみ出させる */
+	.total-value {
+		display: flex;
+		justify-content: flex-end;
+		white-space: nowrap;
+	}
+
+	.remarks {
+		margin-top: 2mm;
+	}
+
+	.remarks-label {
+		margin: 0 0 0.5mm;
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.remarks-body {
+		min-height: 8mm;
+		padding: 1mm 2mm;
+		border: 0.2mm solid var(--rule);
+		white-space: pre-wrap;
+	}
+
+	/* --- 印刷 --- */
+
+	@media print {
+		.sheet {
+			width: auto;
+			min-height: 0;
+			margin: 0;
+			box-shadow: none;
+		}
+	}
+
+	/* 画面では用紙の見た目を再現する */
+	@media screen {
+		.sheet {
+			box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+		}
+	}
+</style>

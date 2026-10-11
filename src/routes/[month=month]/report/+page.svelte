@@ -3,7 +3,6 @@
 	import { fetchMonth } from '$lib/client/api';
 	import ReportSheet from '$lib/components/report/ReportSheet.svelte';
 	import { buildReport, type ReportModel } from '$lib/domain/report';
-	import '$lib/styles/print.css';
 	import type { PageProps } from './$types';
 
 	/** 報告書プレビュー（SPEC.md §6.2）。A4 縦のレイアウトでそのまま表示する */
@@ -54,5 +53,24 @@
 	.error {
 		padding: 1rem;
 		color: var(--error);
+	}
+
+	@page {
+		size: A4 portrait;
+		margin: 0;
+	}
+
+	@media print {
+		.no-print {
+			display: none !important;
+		}
+	}
+
+	/* 画面では用紙の見た目を再現する */
+	@media screen {
+		.preview {
+			padding: 8mm 0;
+			background: #71717a;
+		}
 	}
 </style>
