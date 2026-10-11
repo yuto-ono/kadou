@@ -10,10 +10,11 @@
 .sheet {
 	--page-width: 210mm;
 	--page-height: 297mm;
-	--margin-x: 15mm;
+	--margin-x: 10mm;
 	--margin-y: 15mm;
 	--row-height: 5.6mm;
 	--font-size: 9pt;
+	--content-font-size: 8pt;
 
 	/* 白黒だけでは読みにくいため、ブルー系をアクセントに使う */
 	--ink: #1a1d23;
@@ -134,8 +135,8 @@
 }
 
 /*
- * 列幅（SPEC.md §7.3）。A4 幅 210mm − 左右余白 30mm = 180mm。
- * 見出しが折り返さない幅を確保したうえで、作業内容に 9pt の全角 30 文字が
+ * 列幅（SPEC.md §7.3）。A4 幅 210mm − 左右余白 20mm = 190mm。
+ * 見出しが折り返さない幅を確保したうえで、作業内容に 8pt の全角 38 文字が
  * 収まる幅を残す。終了列は最長の「翌23:59」に合わせる。
  */
 .col-date { width: 9mm; }
@@ -158,6 +159,11 @@
 
 .detail td.center {
 	text-align: center;
+}
+
+/* 作業内容だけ一段小さくし、全角 38 文字を 1 行に収める（SPEC.md §7.3） */
+.detail td.content {
+	font-size: var(--content-font-size);
 }
 
 /* --- フッタ（SPEC.md §7.1） --- */

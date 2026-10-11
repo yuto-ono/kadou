@@ -36,7 +36,7 @@ export interface DayRecord {
 	dayType: DayType;
 	/** 稼働しない日は空配列。開始・終了・休憩はここから導出する（SPEC.md §5.1） */
 	workPeriods: WorkPeriod[];
-	/** 報告書の明細表に出る。改行なしの 1 行、30 文字以内 */
+	/** 報告書の明細表に出る。改行なしの 1 行、38 文字以内 */
 	workContent: string;
 	/** 自分用のメモ。報告書には出力しない */
 	journal: string;

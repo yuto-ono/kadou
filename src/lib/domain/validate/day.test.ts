@@ -6,17 +6,17 @@ import { contentLength, validateDay } from './day';
 const codes = (d: DayRecord, maxEndTime = '28:00') => validateDay(d, maxEndTime).map((i) => i.code);
 
 describe('作業内容', () => {
-	it('30 文字までは通す', () => {
-		expect(codes(day('2026-09-01', { workContent: 'あ'.repeat(30) }))).toEqual([]);
+	it('38 文字までは通す', () => {
+		expect(codes(day('2026-09-01', { workContent: 'あ'.repeat(38) }))).toEqual([]);
 	});
 
-	it('31 文字で違反', () => {
-		expect(codes(day('2026-09-01', { workContent: 'あ'.repeat(31) }))).toContain('workContentTooLong');
+	it('39 文字で違反', () => {
+		expect(codes(day('2026-09-01', { workContent: 'あ'.repeat(39) }))).toContain('workContentTooLong');
 	});
 
 	it('全角半角を区別せず数える', () => {
 		expect(contentLength('あいうabc')).toBe(6);
-		expect(codes(day('2026-09-01', { workContent: 'a'.repeat(31) }))).toContain('workContentTooLong');
+		expect(codes(day('2026-09-01', { workContent: 'a'.repeat(39) }))).toContain('workContentTooLong');
 	});
 });
 

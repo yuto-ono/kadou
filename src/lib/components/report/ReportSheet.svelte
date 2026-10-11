@@ -46,7 +46,7 @@
 					<td class="center">{row.end}</td>
 					<td class="num">{row.breakTime}</td>
 					<td class="num worked">{row.workTime}</td>
-					<td>{row.workContent}</td>
+					<td class="content">{row.workContent}</td>
 				</tr>
 			{/each}
 		</tbody>

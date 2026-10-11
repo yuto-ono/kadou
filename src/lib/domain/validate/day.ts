@@ -4,7 +4,7 @@ import type { DayRecord, TimeString } from '../types';
 import { issue, type Issue } from './issue';
 
 /** 作業内容の上限。守れば印字幅に収まり、31 行 1 ページの制約が確定する（SPEC.md §4.2） */
-export const WORK_CONTENT_MAX = 30;
+export const WORK_CONTENT_MAX = 38;
 
 /** 全角半角を区別せず数える（SPEC.md §4.2）。サロゲートペアは 1 文字とする */
 export function contentLength(text: string): number {
