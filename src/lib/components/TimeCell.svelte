@@ -6,7 +6,7 @@
 	 *
 	 * <input type="time"> は 24 時以降を受け付けないためテキスト入力にする。
 	 * 正規化は確定時（blur / Enter）に行う。打鍵のたびに書き換えるとカーソルが飛ぶ。
- * Esc で編集前の値へ戻す。
+	 * Esc で編集前の値へ戻し、もう一度押すと欄から抜ける。
 	 */
 	interface Props {
 		value: string | null;
@@ -44,12 +44,16 @@
 		if (e.isComposing || e.keyCode === 229) return;
 		if (e.key === 'Enter') {
 			e.currentTarget.blur();
-		} else if (e.key === 'Escape' && draft !== null) {
-			draft = null;
-			formatError = null;
-			e.currentTarget.blur();
-			// 戻す値があるときだけ握りつぶす。何もなければパネルを閉じる Esc として通す
-			e.stopPropagation();
+		} else if (e.key === 'Escape') {
+			// 一段ずつ抜ける。編集中なら値を戻して欄に留まり、そうでなければ欄から
+			// 抜けてパネルを閉じる Esc として通す
+			if (draft === null) {
+				e.currentTarget.blur();
+			} else {
+				draft = null;
+				formatError = null;
+				e.stopPropagation();
+			}
 		}
 	}
 

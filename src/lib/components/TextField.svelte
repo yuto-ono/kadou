@@ -6,7 +6,7 @@
 	 * 文字の入力欄（SPEC.md §6.1「入力欄の確定」）。
 	 *
 	 * 打っている間はこの欄の中だけに持ち、Enter かフォーカス離脱で保存する。Esc で
-	 * 編集前の値へ戻す。時刻の欄（TimeCell）と同じ確定の規則にそろえる。
+	 * 編集前の値へ戻し、もう一度押すと欄から抜ける。時刻の欄（TimeCell）と同じ確定の規則にそろえる。
 	 *
 	 * multiline は改行を入力するので Enter では確定せず、フォーカス離脱でのみ保存する。
 	 */
@@ -82,12 +82,15 @@
 		// 立てずに keyCode 229 を送ることがある
 		if (e.isComposing || e.keyCode === 229) return;
 
-		if (e.key === 'Escape' && draft !== null) {
-			// 下書きを捨ててから外す。先に外すと blur の確定で保存されてしまう
-			draft = null;
-			e.currentTarget.blur();
-			// 戻す値があるときだけ握りつぶす。何もなければパネルを閉じる Esc として通す
-			e.stopPropagation();
+		// Esc は一段ずつ抜ける。編集中なら値を戻して欄に留まり、そうでなければ欄から
+		// 抜けてパネルを閉じる Esc として通す
+		if (e.key === 'Escape') {
+			if (draft === null) {
+				e.currentTarget.blur();
+			} else {
+				draft = null;
+				e.stopPropagation();
+			}
 			return;
 		}
 		if (e.key === 'Enter' && !multiline) {
