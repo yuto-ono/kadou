@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { removeMonth } from '$lib/client/api';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import DayTable from '$lib/components/DayTable.svelte';
 	import DetailPanel from '$lib/components/DetailPanel.svelte';
@@ -53,8 +52,7 @@
 
 	async function remove() {
 		confirmDelete = false;
-		await store?.flush();
-		await removeMonth(data.month);
+		if (!(await store?.remove())) return;
 		await goto(resolve('/'), { invalidateAll: true });
 	}
 
@@ -124,14 +122,23 @@
 	{:else if store.state === 'error'}
 		<p class="notice error">読み込めませんでした: {store.loadError}</p>
 	{:else if store.data && store.summary}
-		{#if store.saveError}
+		{#if store.conflict}
+			<!-- 保存を止めている（SPEC.md §4.5「外部での変更との衝突」） -->
+			<section class="notice error">
+				<p>
+					<strong>{store.conflict}。</strong>
+					上書きしないよう保存を止めました。再読み込みすると、画面にしかない未保存の入力は失われます。
+				</p>
+				<button onclick={() => store?.load()}>再読み込み</button>
+			</section>
+		{:else if store.saveError}
 			<p class="notice error">保存できませんでした: {store.saveError}</p>
 		{/if}
 		<IssueList title="ファイルの内容に問題があります" issues={store.fileIssues} />
 
 		<MonthSummary summary={store.summary} contract={store.data.contract} />
 
-		<details class="remarks">
+		<details class="remarks" inert={store.conflict !== null}>
 			<summary>
 				特記事項
 				<span class="preview">{store.data.remarks || '報告書のフッタに出力されます'}</span>
@@ -146,7 +153,7 @@
 			/>
 		</details>
 
-		<div class="body">
+		<div class="body" inert={store.conflict !== null}>
 			<div class="list">
 				<DayTable {store} onConfirmClear={(date, next) => (pendingChange = { date, next })} />
 			</div>

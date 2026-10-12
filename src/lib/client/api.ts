@@ -16,6 +16,12 @@ export class ApiError extends Error {
 export class NotFoundError extends ApiError {}
 
 /**
+ * 読み込んだあとにファイルが画面の外で書き換えられた（SPEC.md §4.5「外部での変更との衝突」）。
+ * サーバーは何も書いていない
+ */
+export class ConflictError extends ApiError {}
+
+/**
  * SvelteKit の load から呼ぶときは、その load が受け取った fetch を渡す。
  * 素の window.fetch だと SvelteKit の追跡から外れる。
  */
@@ -30,7 +36,9 @@ async function request(path: string, init?: RequestInit, fetchFn: Fetch = fetch)
 		.then((b: { message?: string }) => b.message ?? res.statusText)
 		.catch(() => res.statusText);
 
-	throw res.status === 404 ? new NotFoundError(404, message) : new ApiError(res.status, message);
+	if (res.status === 404) throw new NotFoundError(404, message);
+	if (res.status === 412) throw new ConflictError(412, message);
+	throw new ApiError(res.status, message);
 }
 
 export async function fetchMonths(fetchFn?: Fetch): Promise<string[]> {
@@ -38,21 +46,46 @@ export async function fetchMonths(fetchFn?: Fetch): Promise<string[]> {
 	return ((await res.json()) as { months: string[] }).months;
 }
 
-export async function fetchMonth(month: string): Promise<{ data: MonthData; issues: Issue[] }> {
+/**
+ * 月の版。書き込み・削除のときに送り返す。null は月がまだないことを表し、作成に使う
+ * （SPEC.md §4.5「外部での変更との衝突」）
+ */
+export type MonthVersion = string | null;
+
+export async function fetchMonth(
+	month: string
+): Promise<{ data: MonthData; issues: Issue[]; version: string }> {
 	const res = await request(`/api/months/${month}`);
-	return (await res.json()) as { data: MonthData; issues: Issue[] };
+	const body = (await res.json()) as { data: MonthData; issues: Issue[] };
+	return { ...body, version: versionFrom(res) };
 }
 
-export async function saveMonth(month: string, data: MonthData): Promise<void> {
-	await request(`/api/months/${month}`, {
+/** 書いたあとの版を返す */
+export async function saveMonth(
+	month: string,
+	data: MonthData,
+	version: MonthVersion
+): Promise<string> {
+	const res = await request(`/api/months/${month}`, {
 		method: 'PUT',
-		headers: { 'content-type': 'application/json' },
+		headers: { 'content-type': 'application/json', ...precondition(version) },
 		body: JSON.stringify(data)
 	});
+	return versionFrom(res);
 }
 
-export async function removeMonth(month: string): Promise<void> {
-	await request(`/api/months/${month}`, { method: 'DELETE' });
+export async function removeMonth(month: string, version: string): Promise<void> {
+	await request(`/api/months/${month}`, { method: 'DELETE', headers: precondition(version) });
+}
+
+function precondition(version: MonthVersion): Record<string, string> {
+	return version === null ? { 'if-none-match': '*' } : { 'if-match': `"${version}"` };
+}
+
+function versionFrom(res: Response): string {
+	const etag = res.headers.get('etag');
+	if (etag === null) throw new ApiError(res.status, 'サーバーが版を返しませんでした');
+	return etag.replace(/^W\//, '').replace(/^"|"$/g, '');
 }
 
 export async function fetchContract(): Promise<Contract> {

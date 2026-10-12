@@ -1,4 +1,11 @@
-import { fetchMonth, NotFoundError, saveMonth } from '$lib/client/api';
+import {
+	ConflictError,
+	fetchMonth,
+	NotFoundError,
+	removeMonth,
+	saveMonth,
+	type MonthVersion
+} from '$lib/client/api';
 import { today } from '$lib/client/clock';
 import { createDebouncedWriter, type DebouncedWriter } from '$lib/client/debounce';
 import { emptyMonth, toSnapshot } from '$lib/domain/calendar';
@@ -25,24 +32,37 @@ export class MonthStore {
 	fileIssues = $state<Issue[]>([]);
 	loadError = $state<string | null>(null);
 	saveError = $state<string | null>(null);
+	/**
+	 * 読み込んだあとにファイルが画面の外で書き換えられた（SPEC.md §4.5「外部での変更との
+	 * 衝突」）。立っている間は保存しない。再読み込みで下ろす
+	 */
+	conflict = $state<string | null>(null);
 	unsaved = $state(false);
 	/** 選択中の行。詳細パネルが開いているかを兼ねる */
 	selectedDate = $state<string | null>(null);
 
 	#writer: DebouncedWriter<MonthData>;
 	#maxEndTime: () => string;
+	/** 最後に読み込んだか書き込んだときの版。次の書き込みで送り返す */
+	#version: MonthVersion = null;
 
 	constructor(month: string, maxEndTime: () => string) {
 		this.month = month;
 		this.#maxEndTime = maxEndTime;
-		this.#writer = createDebouncedWriter((data) => saveMonth(this.month, data), {
-			onError: (e) => {
-				this.saveError = e instanceof Error ? e.message : String(e);
+		this.#writer = createDebouncedWriter(
+			async (data) => {
+				this.#version = await saveMonth(this.month, data, this.#version);
 			},
-			onPendingChange: (pending) => {
-				this.unsaved = pending;
+			{
+				onError: (e) => {
+					if (e instanceof ConflictError) this.#enterConflict(e);
+					else this.saveError = e instanceof Error ? e.message : String(e);
+				},
+				onPendingChange: (pending) => {
+					this.unsaved = pending;
+				}
 			}
-		});
+		);
 	}
 
 	summary = $derived<MonthSummary | null>(
@@ -60,12 +80,17 @@ export class MonthStore {
 		this.data?.days.find((d) => d.date === this.selectedDate) ?? null
 	);
 
+	/** 衝突のあとに呼ぶと、画面にしかない未保存の入力を捨ててファイルの内容に戻る */
 	async load(): Promise<void> {
+		this.#writer.cancel();
 		this.state = 'loading';
+		this.conflict = null;
+		this.saveError = null;
 		try {
-			const { data, issues } = await fetchMonth(this.month);
+			const { data, issues, version } = await fetchMonth(this.month);
 			this.data = data;
 			this.fileIssues = issues;
+			this.#version = version;
 			this.state = 'ready';
 		} catch (e) {
 			this.data = null;
@@ -81,10 +106,32 @@ export class MonthStore {
 	/** 未作成の月を作る。契約設定のスナップショットをここで焼き付ける（SPEC.md §4.4） */
 	async create(contract: Contract): Promise<void> {
 		const data = emptyMonth(this.month, toSnapshot(contract));
-		await saveMonth(this.month, data);
+		try {
+			this.#version = await saveMonth(this.month, data, null);
+		} catch (e) {
+			// 画面の外で先に作られていた。そちらを読む
+			if (e instanceof ConflictError) return this.load();
+			throw e;
+		}
 		this.data = data;
 		this.fileIssues = [];
 		this.state = 'ready';
+	}
+
+	/** 月を消す。画面の外で書き換えられていたら消さずに false を返す */
+	async remove(): Promise<boolean> {
+		await this.flush();
+		if (this.conflict !== null || this.#version === null) return false;
+		try {
+			await removeMonth(this.month, this.#version);
+			return true;
+		} catch (e) {
+			if (e instanceof ConflictError) {
+				this.#enterConflict(e);
+				return false;
+			}
+			throw e;
+		}
 	}
 
 	// --- 編集 ---
@@ -137,9 +184,14 @@ export class MonthStore {
 	}
 
 	#scheduleSave(): void {
-		if (this.data === null) return;
+		if (this.data === null || this.conflict !== null) return;
 		this.saveError = null;
 		this.#writer.schedule(this.data);
+	}
+
+	#enterConflict(e: ConflictError): void {
+		this.#writer.cancel();
+		this.conflict = e.message;
 	}
 
 	#find(date: string): DayRecord | null {

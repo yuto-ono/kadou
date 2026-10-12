@@ -6,16 +6,13 @@ import { dirname, join } from 'node:path';
 
 export interface ReadResult {
 	text: string;
-	/** 将来 If-Unmodified-Since を足せるように返しておく */
-	mtimeMs: number;
 }
 
 export async function readTextFile(path: string): Promise<ReadResult | null> {
 	try {
 		const handle = await open(path, 'r');
 		try {
-			const [text, stat] = await Promise.all([handle.readFile('utf8'), handle.stat()]);
-			return { text, mtimeMs: stat.mtimeMs };
+			return { text: await handle.readFile('utf8') };
 		} finally {
 			await handle.close();
 		}

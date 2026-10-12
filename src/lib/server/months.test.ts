@@ -1,4 +1,4 @@
-import { mkdtemp, readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, utimes, writeFile, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -6,7 +6,15 @@ import { emptyMonth } from '$lib/domain/calendar';
 import { CONTRACT_DEFAULTS } from '$lib/domain/defaults';
 import type { MonthData } from '$lib/domain/types';
 import { MonthSyntaxError } from '$lib/persistence/month-parse';
-import { deleteMonth, listMonths, readMonth, RoundTripError, writeMonth } from './months';
+import {
+	currentVersion,
+	deleteMonth,
+	listMonths,
+	readMonth,
+	RoundTripError,
+	VersionMismatchError,
+	writeMonth
+} from './months';
 
 let dir: string;
 const original = process.env.KADOU_DATA_DIR;
@@ -192,5 +200,80 @@ describe('deleteMonth', () => {
 		await writeMonth('2026-09', september());
 		await deleteMonth('2026-09');
 		expect(await readdir(join(dir, 'months'))).toEqual([]);
+	});
+});
+
+describe('版（外部での変更との衝突）', () => {
+	const yamlPath = () => join(dir, 'months', '2026-09.yaml');
+	const journalPath = (name: string) => join(dir, 'months', '2026-09', name);
+
+	it('読み込んだ版と書き込みが返す版は、書いた内容の版と一致する', async () => {
+		const written = await writeMonth('2026-09', september(), null);
+		expect((await readMonth('2026-09'))?.version).toBe(written);
+		expect(await currentVersion('2026-09')).toBe(written);
+	});
+
+	it('版が一致すれば書ける', async () => {
+		const v1 = await writeMonth('2026-09', september(), null);
+		const m = september();
+		m.remarks = '追記';
+		const v2 = await writeMonth('2026-09', m, v1);
+		expect(v2).not.toBe(v1);
+		expect((await readMonth('2026-09'))?.data.remarks).toBe('追記');
+	});
+
+	it('外で YAML を書き換えていたら何も書かない', async () => {
+		const version = await writeMonth('2026-09', september(), null);
+		const edited = (await readFile(yamlPath(), 'utf8')) + 'remarks: 外で書いた\n';
+		await writeFile(yamlPath(), edited);
+
+		await expect(writeMonth('2026-09', september(), version)).rejects.toThrow(
+			VersionMismatchError
+		);
+		expect(await readFile(yamlPath(), 'utf8')).toBe(edited);
+	});
+
+	it('外で足した journal のファイルを消さない', async () => {
+		const version = await writeMonth('2026-09', september(), null);
+		await writeFile(journalPath('02.md'), '外で書いた\n');
+
+		await expect(writeMonth('2026-09', september(), version)).rejects.toThrow(
+			VersionMismatchError
+		);
+		expect(await readFile(journalPath('02.md'), 'utf8')).toBe('外で書いた\n');
+	});
+
+	it('中身が同じなら mtime が変わっても衝突にしない', async () => {
+		const version = await writeMonth('2026-09', september(), null);
+		await utimes(yamlPath(), new Date(0), new Date(0));
+		await expect(writeMonth('2026-09', september(), version)).resolves.toBe(version);
+	});
+
+	it('ドットファイルは版に含めない', async () => {
+		const version = await writeMonth('2026-09', september(), null);
+		await writeFile(journalPath('.DS_Store'), 'x');
+		expect(await currentVersion('2026-09')).toBe(version);
+	});
+
+	it('作成（null）は月がまだないときだけ書ける', async () => {
+		await writeMonth('2026-09', september(), null);
+		await expect(writeMonth('2026-09', september(), null)).rejects.toThrow(VersionMismatchError);
+	});
+
+	it('外で消されていたら書かない', async () => {
+		const version = await writeMonth('2026-09', september(), null);
+		await deleteMonth('2026-09');
+		await expect(writeMonth('2026-09', september(), version)).rejects.toThrow(
+			VersionMismatchError
+		);
+		expect(await currentVersion('2026-09')).toBeNull();
+	});
+
+	it('削除も版が食い違えば何も消さない', async () => {
+		const version = await writeMonth('2026-09', september(), null);
+		await writeFile(journalPath('02.md'), '外で書いた\n');
+
+		await expect(deleteMonth('2026-09', version)).rejects.toThrow(VersionMismatchError);
+		expect(await currentVersion('2026-09')).not.toBeNull();
 	});
 });
