@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { contractPath, dataDir, InvalidMonthError, monthFromFilename, monthPath } from './paths';
+import {
+	contractPath,
+	dataDir,
+	InvalidMonthError,
+	journalDir,
+	monthFromFilename,
+	monthPath
+} from './paths';
 
 const original = process.env.KADOU_DATA_DIR;
 afterEach(() => {
@@ -32,6 +39,11 @@ describe('monthPath', () => {
 
 	it('months/ の下に置く', () => {
 		expect(monthPath('2026-09')).toBe('/var/kadou/months/2026-09.yaml');
+	});
+
+	it('journal は月の YAML の隣のディレクトリに置く', () => {
+		expect(journalDir('2026-09')).toBe('/var/kadou/months/2026-09');
+		expect(() => journalDir('../etc')).toThrow(InvalidMonthError);
 	});
 
 	it('月として妥当でない文字列を拒む', () => {

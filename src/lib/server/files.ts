@@ -1,5 +1,5 @@
 import { constants } from 'node:fs';
-import { access, mkdir, open, readdir, rename, unlink } from 'node:fs/promises';
+import { access, mkdir, open, readdir, rename, rm, rmdir, unlink } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
 /** ファイルの読み書き。ドメインの規則は持たない（SPEC.md §4.5「責務の分担」） */
@@ -62,9 +62,27 @@ export async function deleteFile(path: string): Promise<boolean> {
 	}
 }
 
+/** 中身ごと消す。なければ何もしない */
+export async function deleteDir(path: string): Promise<void> {
+	await rm(path, { recursive: true, force: true });
+}
+
+/** 空のときだけ消す。中身が残っていれば、あるいはなければ何もしない */
+export async function deleteDirIfEmpty(path: string): Promise<void> {
+	try {
+		await rmdir(path);
+	} catch (e) {
+		const code = (e as { code?: string }).code;
+		if (code === 'ENOENT' || code === 'ENOTEMPTY' || code === 'EEXIST') return;
+		throw e;
+	}
+}
+
+/** ディレクトリ直下の通常ファイルの名前。サブディレクトリは含めない */
 export async function listFiles(dir: string): Promise<string[]> {
 	try {
-		return await readdir(dir);
+		const entries = await readdir(dir, { withFileTypes: true });
+		return entries.filter((e) => e.isFile()).map((e) => e.name);
 	} catch (e) {
 		if (isNotFound(e)) return [];
 		throw e;

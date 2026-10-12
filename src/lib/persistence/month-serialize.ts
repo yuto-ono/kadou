@@ -8,6 +8,8 @@ import { blockLiteral, quoted } from './scalars';
  *
  * 既定値と同じフィールドは書き出さない。土日や祝日の行が数行に収まり、diff が
  * 読みやすくなる。date と dayType は既定値を持たず常に書く。
+ *
+ * journal は書かない。日ごとの Markdown ファイルに置く（journal.ts）。
  */
 export function serializeMonth(data: MonthData): string {
 	const root: Record<string, unknown> = {
@@ -21,7 +23,7 @@ export function serializeMonth(data: MonthData): string {
 		}
 	};
 
-	if (data.remarks !== DAY_DEFAULTS.journal) root.remarks = blockLiteral(data.remarks);
+	if (data.remarks !== '') root.remarks = blockLiteral(data.remarks);
 	root.days = data.days.map(serializeDay);
 
 	const doc = new Document(root);
@@ -38,7 +40,6 @@ function serializeDay(day: DayRecord): Record<string, unknown> {
 		out.workPeriods = day.workPeriods.map((p) => ({ start: quoted(p.start), end: quoted(p.end) }));
 	}
 	if (day.workContent !== DAY_DEFAULTS.workContent) out.workContent = day.workContent;
-	if (day.journal !== DAY_DEFAULTS.journal) out.journal = blockLiteral(day.journal);
 	if (day.contentAutoFilled !== DAY_DEFAULTS.contentAutoFilled) {
 		out.contentAutoFilled = day.contentAutoFilled;
 	}

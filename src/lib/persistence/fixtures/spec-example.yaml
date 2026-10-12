@@ -16,9 +16,5 @@ days:
       - start: "13:00"
         end: "19:00"
     workContent: 認証基盤のリファクタリング
-    journal: |
-      レビュー指摘の対応。
-      - トークン検証の順序を入れ替え
-      - 移行手順は次週あらためて相談
   - date: "2026-09-06"
     dayType: weekend

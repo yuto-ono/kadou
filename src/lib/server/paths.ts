@@ -5,6 +5,7 @@ import { isAbsolute, join, resolve, sep } from 'node:path';
  *
  *   contract.yaml
  *   months/2026-09.yaml
+ *   months/2026-09/01.md   journal（SPEC.md §4.5「journal のファイル」）
  *
  * 場所は起動時に指定し、既定はカレントディレクトリ。アプリのソースと作業記録を
  * 別のリポジトリに置けるようにするため。
@@ -41,6 +42,11 @@ export function monthPath(month: string): string {
 	// 正規表現を通っていれば到達しないが、多重防御として実際のパスも確かめる
 	if (!resolve(path).startsWith(resolve(monthsDir()) + sep)) throw new InvalidMonthError(month);
 	return path;
+}
+
+/** その月の journal を置くディレクトリ。月の YAML の隣に置く */
+export function journalDir(month: string): string {
+	return monthPath(month).replace(/\.yaml$/, '');
 }
 
 /** ファイル名から月の一覧を作る。中身が壊れていても一覧には出る */

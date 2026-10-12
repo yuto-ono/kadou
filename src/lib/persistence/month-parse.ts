@@ -96,7 +96,8 @@ function readDay(date: string, entry: Record<string, unknown>, issues: Issue[]):
 		dayType: readDayType(entry.dayType, date, issues),
 		workPeriods: readPeriods(entry.workPeriods, date, issues),
 		workContent: readText(entry.workContent),
-		journal: readText(entry.journal),
+		// journal は日ごとの Markdown ファイルに置く。server が mergeJournals で差し込む
+		journal: DAY_DEFAULTS.journal,
 		contentAutoFilled: entry.contentAutoFilled === true
 	};
 }

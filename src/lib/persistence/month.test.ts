@@ -29,9 +29,6 @@ describe('SPEC の実例（§4.5）', () => {
 
 	it('ブロックスカラーの末尾改行を剥がす', () => {
 		expect(data.remarks).toBe('祝日が重なり、想定稼働が精算幅の下限を下回っています。');
-		expect(data.days[0].journal).toBe(
-			'レビュー指摘の対応。\n- トークン検証の順序を入れ替え\n- 移行手順は次週あらためて相談'
-		);
 	});
 
 	it('日次の値を読む', () => {
@@ -43,7 +40,7 @@ describe('SPEC の実例（§4.5）', () => {
 				{ start: '13:00', end: '19:00' }
 			],
 			workContent: '認証基盤のリファクタリング',
-			journal: 'レビュー指摘の対応。\n- トークン検証の順序を入れ替え\n- 移行手順は次週あらためて相談',
+			journal: '',
 			contentAutoFilled: false
 		});
 	});
@@ -71,8 +68,7 @@ describe('serializeMonth', () => {
 				{ start: '13:00', end: '25:00' },
 				{ start: '25:30', end: '26:00' }
 			],
-			workContent: '認証基盤のリファクタリング',
-			journal: 'レビュー指摘の対応。\n- 順序を入れ替え'
+			workContent: '認証基盤のリファクタリング'
 		};
 		m.days[20] = { ...m.days[20], dayType: 'holiday', workContent: '祝日', contentAutoFilled: true };
 		return m;
@@ -92,10 +88,15 @@ describe('serializeMonth', () => {
 		}
 	});
 
-	it('journal と remarks をブロックスカラーで書く', () => {
+	it('remarks をブロックスカラーで書く', () => {
 		const text = serializeMonth(rich());
 		expect(text).toContain('remarks: |\n  祝日が重なりました。\n');
-		expect(text).toContain('journal: |\n      レビュー指摘の対応。\n      - 順序を入れ替え\n');
+	});
+
+	it('journal は書き出さない（日ごとの Markdown ファイルに置く）', () => {
+		const m = rich();
+		m.days[0] = { ...m.days[0], journal: 'メモ' };
+		expect(serializeMonth(m)).not.toContain('journal');
 	});
 
 	it('contentAutoFilled は true のときだけ書く', () => {
@@ -132,9 +133,7 @@ describe('serializeMonth', () => {
 				'"引用符つき"'
 			];
 			fragile.forEach((v, i) => (m.days[i] = { ...m.days[i], workContent: v }));
-			m.days[20] = { ...m.days[20], journal: '行末に空白   \nつぎの行' };
-			m.days[21] = { ...m.days[21], journal: '末尾に空行\n' };
-			m.days[22] = { ...m.days[22], journal: '  先頭が空白' };
+			m.remarks = '行末に空白   \n  先頭が空白\n';
 
 			expect(parseMonth(serializeMonth(m), '2026-01').data).toEqual(m);
 		});

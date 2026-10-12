@@ -4,7 +4,7 @@ import { Scalar } from 'yaml';
  * YAML のスカラー表現の制御。
  *
  * 既定の stringify 任せにすると、時刻と日付の強制クォート（SPEC.md §4.5）や
- * journal のブロックスカラーを指定できない。
+ * remarks のブロックスカラーを指定できない。
  */
 
 /**
@@ -20,9 +20,9 @@ export function quoted(value: string): Scalar<string> {
 }
 
 /**
- * ブロックスカラー（`|`）で書く。journal と remarks に使う。
+ * ブロックスカラー（`|`）で書く。remarks に使う。
  *
- * Markdown を生のまま書けるため、git の diff が通常の文章として読める。
+ * 複数行を生のまま書けるため、git の diff が通常の文章として読める。
  * 末尾改行を 1 個だけ付けて clip（`|`）にする。データとしては末尾改行なしで保持
  * し、読み込み時に 1 個剥がす（SPEC.md §4.5）。決めておかないと、読んで書き直す
  * だけで末尾の改行が増減して diff に現れる。

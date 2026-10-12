@@ -82,13 +82,14 @@ describe('writeMonth / readMonth', () => {
 
 	it('months/ を作ってから書く', async () => {
 		await writeMonth('2026-09', september());
-		expect(await readdir(join(dir, 'months'))).toEqual(['2026-09.yaml']);
+		expect((await readdir(join(dir, 'months'))).sort()).toEqual(['2026-09', '2026-09.yaml']);
 	});
 
 	it('一時ファイルを残さない', async () => {
 		await writeMonth('2026-09', september());
 		await writeMonth('2026-09', september());
-		expect(await readdir(join(dir, 'months'))).toEqual(['2026-09.yaml']);
+		expect((await readdir(join(dir, 'months'))).sort()).toEqual(['2026-09', '2026-09.yaml']);
+		expect(await readdir(join(dir, 'months', '2026-09'))).toEqual(['01.md']);
 	});
 
 	it('書き出す先の month をパスに合わせる', async () => {
@@ -107,6 +108,54 @@ describe('writeMonth / readMonth', () => {
 
 	it('月として妥当でない名前は書けない', async () => {
 		await expect(writeMonth('../escape', september())).rejects.toThrow();
+	});
+});
+
+describe('journal のファイル', () => {
+	const journalDir = () => join(dir, 'months', '2026-09');
+
+	it('日ごとの Markdown ファイルに見出しを付けて書き、YAML には書かない', async () => {
+		await writeMonth('2026-09', september());
+		expect(await readFile(join(journalDir(), '01.md'), 'utf8')).toBe(
+			'# 2026-09-01（火）\n\nメモ\n- 続き\n'
+		);
+		expect(await readFile(join(dir, 'months', '2026-09.yaml'), 'utf8')).not.toContain('journal');
+	});
+
+	it('journal が空の日はファイルを置かない', async () => {
+		const m = september();
+		m.days[1] = { ...m.days[1], journal: '' };
+		await writeMonth('2026-09', m);
+		expect(await readdir(journalDir())).toEqual(['01.md']);
+	});
+
+	it('空にした日のファイルを消し、空になったディレクトリも消す', async () => {
+		await writeMonth('2026-09', september());
+		const m = september();
+		m.days[0] = { ...m.days[0], journal: '' };
+		await writeMonth('2026-09', m);
+		expect(await readdir(join(dir, 'months'))).toEqual(['2026-09.yaml']);
+	});
+
+	it('手編集で見出しを消したファイルも本文として読む', async () => {
+		await writeMonth('2026-09', september());
+		await writeFile(join(journalDir(), '02.md'), '# 手で書いた見出し\n本文\n');
+		const parsed = await readMonth('2026-09');
+		expect(parsed?.data.days[1].journal).toBe('# 手で書いた見出し\n本文');
+	});
+
+	it('日付として読めないファイルは報告し、ドットファイルは無視する', async () => {
+		await writeMonth('2026-09', september());
+		await writeFile(join(journalDir(), '31.md'), 'x\n');
+		await writeFile(join(journalDir(), '.DS_Store'), '');
+		const parsed = await readMonth('2026-09');
+		expect(parsed?.issues.map((i) => i.code)).toEqual(['fileUnknownJournal']);
+	});
+
+	it('YAML がなければ journal があっても null', async () => {
+		await mkdir(journalDir(), { recursive: true });
+		await writeFile(join(journalDir(), '01.md'), 'x\n');
+		expect(await readMonth('2026-09')).toBeNull();
 	});
 });
 
@@ -137,5 +186,11 @@ describe('deleteMonth', () => {
 		await writeMonth('2026-09', september());
 		expect(await deleteMonth('2026-09')).toBe(true);
 		expect(await deleteMonth('2026-09')).toBe(false);
+	});
+
+	it('journal のディレクトリもまとめて消す', async () => {
+		await writeMonth('2026-09', september());
+		await deleteMonth('2026-09');
+		expect(await readdir(join(dir, 'months'))).toEqual([]);
 	});
 });

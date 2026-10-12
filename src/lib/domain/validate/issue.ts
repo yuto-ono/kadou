@@ -20,12 +20,13 @@ export type IssueCode =
 	| 'contractRangeInverted'
 	| 'contractDailyHoursNotPositive'
 	| 'contractMaxEndTimeOutOfRange'
-	// YAML の読み込み（SPEC.md §4.5）
+	// ファイルの読み込み（SPEC.md §4.5）
 	| 'fileMonthMismatch'
 	| 'fileUnknownDate'
 	| 'fileDuplicateDate'
 	| 'fileFieldDropped'
-	| 'fileLegacyField';
+	| 'fileLegacyField'
+	| 'fileUnknownJournal';
 
 /** エラーの発生源。UI が該当箇所へエラーを出すために使う */
 export interface IssueTarget {
