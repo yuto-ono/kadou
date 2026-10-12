@@ -47,6 +47,7 @@
 		} else if (e.key === 'Escape' && draft !== null) {
 			draft = null;
 			formatError = null;
+			e.currentTarget.blur();
 			// 戻す値があるときだけ握りつぶす。何もなければパネルを閉じる Esc として通す
 			e.stopPropagation();
 		}

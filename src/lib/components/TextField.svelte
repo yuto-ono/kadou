@@ -26,7 +26,7 @@
 		/** 表示中の文字数。残り文字数の表示に使う */
 		length?: number;
 		onCommit: (value: string) => void;
-		/** Enter で確定した直後に呼ぶ。次の日の欄へ移るのに使う */
+		/** Enter で確定した直後に呼ぶ。次の日の欄へ移るのに使う。Cmd+Enter では呼ばない */
 		onEnter?: () => void;
 	}
 
@@ -83,7 +83,9 @@
 		if (e.isComposing || e.keyCode === 229) return;
 
 		if (e.key === 'Escape' && draft !== null) {
+			// 下書きを捨ててから外す。先に外すと blur の確定で保存されてしまう
 			draft = null;
+			e.currentTarget.blur();
 			// 戻す値があるときだけ握りつぶす。何もなければパネルを閉じる Esc として通す
 			e.stopPropagation();
 			return;
@@ -91,7 +93,8 @@
 		if (e.key === 'Enter' && !multiline) {
 			e.preventDefault();
 			commit();
-			if (onEnter) onEnter();
+			// Cmd+Enter（Ctrl+Enter）は次の日へ移らず、その場で入力を終える
+			if (onEnter && !e.metaKey && !e.ctrlKey) onEnter();
 			else e.currentTarget.blur();
 		}
 	}
