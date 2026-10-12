@@ -6,8 +6,8 @@ import type { Issue } from '$lib/domain/validate/issue';
 /**
  * 契約設定（SPEC.md §4.1）。
  *
- * 画面のロード時に 1 度だけ読む。編集したら画面を再読み込みすれば反映される。
- * アプリからは書き換えない。
+ * 画面のロード時と、画面に戻ったときに読む（SPEC.md §4.5「画面に戻ったときの
+ * 読み直し」）。アプリからは書き換えない。
  */
 export class ContractStore {
 	contract = $state<Contract | null>(null);
@@ -26,15 +26,21 @@ export class ContractStore {
 		this.contract !== null && !this.missing && !blocksMonthCreation(this.issues)
 	);
 
+	/** 読み直しでも呼ぶ。結果がそろってから差し替え、読み込み中に表示がちらつかないようにする */
 	async load(): Promise<void> {
-		this.missing = false;
-		this.loadError = null;
+		let contract: Contract | null = null;
+		let missing = false;
+		let loadError: string | null = null;
 		try {
-			this.contract = await fetchContract();
+			contract = await fetchContract();
 		} catch (e) {
-			this.contract = null;
-			if (e instanceof NotFoundError) this.missing = true;
-			else this.loadError = e instanceof Error ? e.message : String(e);
+			if (e instanceof NotFoundError) missing = true;
+			else loadError = e instanceof Error ? e.message : String(e);
 		}
+
+		// 変わっていなければ差し替えない。月の検証が maxEndTime を通じて再評価されるため
+		if (JSON.stringify(contract) !== JSON.stringify(this.contract)) this.contract = contract;
+		this.missing = missing;
+		this.loadError = loadError;
 	}
 }

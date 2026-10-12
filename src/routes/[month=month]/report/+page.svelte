@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { fetchMonth } from '$lib/client/api';
+	import { fetchMonthIfChanged, type MonthVersion } from '$lib/client/api';
+	import { onReturn } from '$lib/client/return';
 	import ReportSheet from '$lib/components/report/ReportSheet.svelte';
 	import { buildReport, type ReportModel } from '$lib/domain/report';
 	import type { PageProps } from './$types';
@@ -11,14 +12,31 @@
 	let report = $state<ReportModel | null>(null);
 	let error = $state<string | null>(null);
 
+	// 画面に戻ったときにも読み直す。外で直した YAML がそのまま報告書に映る
+	// （SPEC.md §4.5「画面に戻ったときの読み直し」）
 	$effect(() => {
 		const month = data.month;
 		let active = true;
-		void fetchMonth(month)
-			.then(({ data: monthData }) => active && (report = buildReport(monthData)))
-			.catch((e: unknown) => active && (error = e instanceof Error ? e.message : String(e)));
+		let version: MonthVersion = null;
+
+		const load = async () => {
+			try {
+				const fresh = await fetchMonthIfChanged(month, version);
+				if (!active || fresh === null) return;
+				version = fresh.version;
+				report = buildReport(fresh.data);
+				error = null;
+			} catch (e) {
+				// 読み直しに失敗しても、出せている報告書は残す
+				if (active && report === null) error = e instanceof Error ? e.message : String(e);
+			}
+		};
+
+		void load();
+		const off = onReturn(load);
 		return () => {
 			active = false;
+			off();
 		};
 	});
 </script>

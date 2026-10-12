@@ -2,6 +2,7 @@ import { error, json } from '@sveltejs/kit';
 import type { MonthData } from '$lib/domain/types';
 import { MonthSyntaxError } from '$lib/persistence/month-parse';
 import {
+	currentVersion,
 	deleteMonth,
 	readMonth,
 	RoundTripError,
@@ -14,7 +15,17 @@ import type { RequestHandler } from './$types';
 /** 壊れたボディで正しいファイルを置き換えないための、ごく粗い上限 */
 const MAX_BODY_BYTES = 1_000_000;
 
-export const GET: RequestHandler = async ({ params }) => {
+export const GET: RequestHandler = async ({ params, request }) => {
+	// 画面に戻るたびに来る読み直し（SPEC.md §4.5「画面に戻ったときの読み直し」）。
+	// 変わっていなければパースせずに返す
+	const known = request.headers.get('if-none-match');
+	if (known !== null) {
+		const version = await currentVersion(params.month);
+		if (version !== null && version === fromEtag(known)) {
+			return new Response(null, { status: 304, headers: { etag: toEtag(version) } });
+		}
+	}
+
 	try {
 		const parsed = await readMonth(params.month);
 		if (parsed === null) error(404, 'この月のファイルがありません');

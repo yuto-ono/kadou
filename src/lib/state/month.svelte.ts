@@ -1,6 +1,7 @@
 import {
 	ConflictError,
 	fetchMonth,
+	fetchMonthIfChanged,
 	NotFoundError,
 	removeMonth,
 	saveMonth,
@@ -101,6 +102,40 @@ export class MonthStore {
 				this.loadError = e instanceof Error ? e.message : String(e);
 			}
 		}
+	}
+
+	/**
+	 * 画面に戻ったときの読み直し（SPEC.md §4.5「画面に戻ったときの読み直し」）。
+	 *
+	 * 画面にしかない入力は捨てない。未保存の変更は先に書き出し、そこで衝突したら
+	 * 読み直さずに案内を出す。読み直しに失敗しても今の表示を残す。
+	 */
+	async refresh(): Promise<void> {
+		if (this.state === 'loading') return;
+		await this.flush();
+		if (this.conflict !== null || this.#writer.hasPending) return;
+
+		const known = this.state === 'ready' ? this.#version : null;
+		let fresh: Awaited<ReturnType<typeof fetchMonthIfChanged>>;
+		try {
+			fresh = await fetchMonthIfChanged(this.month, known);
+		} catch (e) {
+			if (e instanceof NotFoundError && this.state === 'ready') {
+				// 外で消された。未作成の月として出す（SPEC.md §6「月の作成と削除の導線」）
+				this.data = null;
+				this.selectedDate = null;
+				this.state = 'missing';
+			}
+			return;
+		}
+		// 読み直している間に打鍵があれば、そちらを優先する。次に戻ったときに読み直す
+		if (fresh === null || this.#writer.hasPending) return;
+
+		this.data = fresh.data;
+		this.fileIssues = fresh.issues;
+		this.#version = fresh.version;
+		this.loadError = null;
+		this.state = 'ready';
 	}
 
 	/** 未作成の月を作る。契約設定のスナップショットをここで焼き付ける（SPEC.md §4.4） */

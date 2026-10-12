@@ -30,15 +30,18 @@ export type Fetch = typeof globalThis.fetch;
 async function request(path: string, init?: RequestInit, fetchFn: Fetch = fetch): Promise<Response> {
 	const res = await fetchFn(path, init);
 	if (res.ok) return res;
+	throw await errorOf(res);
+}
 
+async function errorOf(res: Response): Promise<ApiError> {
 	const message = await res
 		.json()
 		.then((b: { message?: string }) => b.message ?? res.statusText)
 		.catch(() => res.statusText);
 
-	if (res.status === 404) throw new NotFoundError(404, message);
-	if (res.status === 412) throw new ConflictError(412, message);
-	throw new ApiError(res.status, message);
+	if (res.status === 404) return new NotFoundError(404, message);
+	if (res.status === 412) return new ConflictError(412, message);
+	return new ApiError(res.status, message);
 }
 
 export async function fetchMonths(fetchFn?: Fetch): Promise<string[]> {
@@ -56,6 +59,27 @@ export async function fetchMonth(
 	month: string
 ): Promise<{ data: MonthData; issues: Issue[]; version: string }> {
 	const res = await request(`/api/months/${month}`);
+	const body = (await res.json()) as { data: MonthData; issues: Issue[] };
+	return { ...body, version: versionFrom(res) };
+}
+
+/**
+ * 手元の版から変わっていれば読み直す。変わっていなければ null（SPEC.md §4.5「画面に
+ * 戻ったときの読み直し」）。月がなくなっていれば NotFoundError
+ */
+export async function fetchMonthIfChanged(
+	month: string,
+	version: MonthVersion
+): Promise<{ data: MonthData; issues: Issue[]; version: string } | null> {
+	// ブラウザの HTTP キャッシュを挟まない。挟むと 304 をキャッシュが引き取り、
+	// 変わっていないことが呼び出し側に伝わらない
+	const init: RequestInit = { cache: 'no-store' };
+	if (version !== null) init.headers = { 'if-none-match': `"${version}"` };
+
+	const res = await fetch(`/api/months/${month}`, init);
+	if (res.status === 304) return null;
+	if (!res.ok) throw await errorOf(res);
+
 	const body = (await res.json()) as { data: MonthData; issues: Issue[] };
 	return { ...body, version: versionFrom(res) };
 }

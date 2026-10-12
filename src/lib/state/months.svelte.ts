@@ -6,7 +6,9 @@ export class MonthsStore {
 	months = $state<string[]>([]);
 
 	async load(): Promise<void> {
-		this.months = await fetchMonths();
+		const months = await fetchMonths();
+		// 画面に戻るたびに呼ばれる。変わっていなければ月セレクタを作り直さない
+		if (months.join() !== this.months.join()) this.months = months;
 	}
 
 	/**

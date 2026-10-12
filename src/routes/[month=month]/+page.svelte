@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
+	import { onReturn } from '$lib/client/return';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import DayTable from '$lib/components/DayTable.svelte';
 	import DetailPanel from '$lib/components/DetailPanel.svelte';
@@ -46,6 +47,13 @@
 			void store?.flush();
 		};
 	});
+
+	// 外で書き換えたファイルを、画面に戻ったときに映す（SPEC.md §4.5「画面に戻ったときの読み直し」）
+	$effect(() =>
+		onReturn(async () => {
+			await Promise.all([contract.load(), months.load(), store?.refresh()]);
+		})
+	);
 
 	// 離脱前に未保存の変更を書き出す（SPEC.md §4.5「書き込み」）
 	beforeNavigate(() => void store?.flush());
