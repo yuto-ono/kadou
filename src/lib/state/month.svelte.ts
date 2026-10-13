@@ -42,8 +42,8 @@ export class MonthStore {
 	/** 選択中の行。詳細パネルが開いているかを兼ねる */
 	selectedDate = $state<string | null>(null);
 	/**
-	 * 本日（SPEC.md §5.2）。画面に戻ったときに取り直す。開いたまま日をまたいでも、
-	 * 集計と今日の行が古い日付のまま残らない
+	 * 本日。画面に戻ったときに取り直す。開いたまま日をまたいでも、今日の行が
+	 * 古い日付のまま残らない
 	 */
 	today = $state(today());
 
@@ -72,7 +72,7 @@ export class MonthStore {
 	}
 
 	summary = $derived<MonthSummary | null>(
-		this.data === null ? null : summarize(this.data, this.today)
+		this.data === null ? null : summarize(this.data)
 	);
 
 	/** 入力の検証（SPEC.md §8）。日付を引いて使う。打鍵ごとに再評価される */

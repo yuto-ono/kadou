@@ -105,7 +105,7 @@ export function monthStringOf(date: Date): MonthString {
 	return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-/** 今日の日付。集計の「本日まで」（SPEC.md §5.2）に渡す */
+/** 日付を DateString にする。呼び出し側がテストで固定できるよう、時刻は引数で受ける */
 export function dateStringOf(date: Date): DateString {
 	return `${monthStringOf(date)}-${String(date.getDate()).padStart(2, '0')}`;
 }

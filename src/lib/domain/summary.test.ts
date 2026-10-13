@@ -20,7 +20,7 @@ function setType(month: MonthData, date: string, dayType: DayType) {
 
 describe('summarize', () => {
 	it('稼働予定日数と想定稼働時間を出す', () => {
-		const s = summarize(september(), '2026-09-30');
+		const s = summarize(september());
 		expect(s.plannedDays).toBe(22);
 		expect(s.plannedMinutes).toBe(22 * 8 * 60);
 	});
@@ -30,7 +30,7 @@ describe('summarize', () => {
 		setType(m, '2026-09-21', 'holiday');
 		setType(m, '2026-09-22', 'personal');
 		setType(m, '2026-09-24', 'clientClosed');
-		const s = summarize(m, '2026-09-30');
+		const s = summarize(m);
 		expect(s.plannedDays).toBe(19);
 		expect(s.breakdown).toEqual({ weekend: 8, holiday: 1, personal: 1, clientClosed: 1 });
 	});
@@ -38,7 +38,7 @@ describe('summarize', () => {
 	it('土日でも work にすれば稼働予定日に入る', () => {
 		const m = september();
 		setType(m, '2026-09-05', 'work');
-		const s = summarize(m, '2026-09-30');
+		const s = summarize(m);
 		expect(s.plannedDays).toBe(23);
 		expect(s.breakdown.weekend).toBe(7);
 	});
@@ -52,51 +52,76 @@ describe('summarize', () => {
 				{ start: '13:00', end: '19:00' }
 			]
 		});
-		expect(summarize(m, '2026-09-30').actualMinutes).toBe(540 + 540);
+		expect(summarize(m).actualMinutes).toBe(540 + 540);
 	});
 
 	describe('ペース差分', () => {
-		it('本日は「本日まで」に含める', () => {
+		it('入力済みの稼働予定日だけを想定と比べる', () => {
 			const m = september();
-			// 09-01 と 09-02 が平日。2 日ぶん働いて、本日が 09-02 ならちょうど 0
-			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '18:00' }] });
 			setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '17:00' }] });
-			expect(summarize(m, '2026-09-02').paceMinutes).toBe(0);
+			// 2 日入力済みで 17h。想定は 2 日 × 8h
+			expect(summarize(m).paceMinutes).toBe(60);
 		});
 
-		it('本日の前日を基準にすると 1 日ぶんの貯金になる', () => {
+		it('日付に関係なく、未入力の日は借金にしない', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
-			setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '17:00' }] });
-			expect(summarize(m, '2026-09-01').paceMinutes).toBe(8 * 60);
+			// 月末の 1 日だけ入力して、それより前は未入力のまま
+			setDay(m, '2026-09-30', { workPeriods: [{ start: '09:00', end: '17:00' }] });
+			expect(summarize(m).paceMinutes).toBe(0);
 		});
 
-		it('過去月では実績 − 想定になる', () => {
+		it('稼働予定日以外の稼働は貯金になる', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
-			const s = summarize(m, '2026-12-01');
-			expect(s.paceMinutes).toBe(8 * 60 - 22 * 8 * 60);
+			// 09-05 は土曜
+			setDay(m, '2026-09-05', { workPeriods: [{ start: '10:00', end: '13:00' }] });
+			expect(summarize(m).paceMinutes).toBe(3 * 60);
 		});
 
-		it('未来月では実績そのものになる', () => {
-			const s = summarize(september(), '2026-01-01');
-			expect(s.paceMinutes).toBe(0);
-			expect(s.projectedMinutes).toBe(22 * 8 * 60);
+		it('何も入力していなければ 0', () => {
+			expect(summarize(september()).paceMinutes).toBe(0);
 		});
 	});
 
 	describe('着地見込み', () => {
-		it('残りの稼働予定日を想定稼働時間で埋める', () => {
+		it('未入力の稼働予定日を想定稼働時間で埋める', () => {
 			const m = september();
 			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '21:00' }] });
 			// 09-01 は 12h 稼働。残りの平日 21 日 × 8h
-			expect(summarize(m, '2026-09-01').projectedMinutes).toBe(12 * 60 + 21 * 8 * 60);
+			expect(summarize(m).projectedMinutes).toBe(12 * 60 + 21 * 8 * 60);
 		});
 
-		it('過去月では実績そのものになる', () => {
+		it('入力の抜けた過去の日も想定で埋める', () => {
 			const m = september();
-			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '17:00' }] });
-			expect(summarize(m, '2026-12-01').projectedMinutes).toBe(8 * 60);
+			// 数日分ためている想定。09-01〜09-03 が未入力で 09-04 だけ入力済み
+			setDay(m, '2026-09-04', { workPeriods: [{ start: '09:00', end: '17:00' }] });
+			expect(summarize(m).projectedMinutes).toBe(22 * 8 * 60);
+		});
+
+		it('入力途中の日は実績だけを数える', () => {
+			const m = september();
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '12:00' }] });
+			expect(summarize(m).projectedMinutes).toBe(3 * 60 + 21 * 8 * 60);
+		});
+
+		it('すべて入力済みなら実績そのものになる', () => {
+			const m = september();
+			for (const day of m.days) {
+				if (day.dayType === 'work') {
+					setDay(m, day.date, { workPeriods: [{ start: '09:00', end: '16:00' }] });
+				}
+			}
+			const s = summarize(m);
+			expect(s.projectedMinutes).toBe(s.actualMinutes);
+			expect(s.projectedMinutes).toBe(22 * 7 * 60);
+		});
+
+		it('想定稼働時間 + ペース差分に一致する', () => {
+			const m = september();
+			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '20:00' }] });
+			setDay(m, '2026-09-06', { workPeriods: [{ start: '10:00', end: '12:00' }] });
+			const s = summarize(m);
+			expect(s.projectedMinutes).toBe(s.plannedMinutes + s.paceMinutes);
 		});
 	});
 
@@ -110,7 +135,7 @@ describe('summarize', () => {
 		it('上限を超えた分を超過時間にする', () => {
 			const m = narrow(september());
 			setDay(m, '2026-09-01', { workPeriods: [{ start: '06:00', end: '23:00' }] });
-			const s = summarize(m, '2026-09-30');
+			const s = summarize(m);
 			expect(s.actualMinutes).toBe(17 * 60);
 			expect(s.overMinutes).toBe(60);
 			expect(s.shortMinutes).toBe(0);
@@ -120,7 +145,7 @@ describe('summarize', () => {
 		it('下限に届かない分を不足時間にする', () => {
 			const m = narrow(september());
 			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '15:00' }] });
-			const s = summarize(m, '2026-09-30');
+			const s = summarize(m);
 			expect(s.actualMinutes).toBe(6 * 60);
 			expect(s.shortMinutes).toBe(2 * 60);
 			expect(s.overMinutes).toBe(0);
@@ -130,7 +155,7 @@ describe('summarize', () => {
 		it('精算幅の中に収まれば超過も不足も 0', () => {
 			const m = narrow(september());
 			setDay(m, '2026-09-01', { workPeriods: [{ start: '09:00', end: '19:00' }] });
-			const s = summarize(m, '2026-09-30');
+			const s = summarize(m);
 			expect(s.overMinutes).toBe(0);
 			expect(s.shortMinutes).toBe(0);
 		});

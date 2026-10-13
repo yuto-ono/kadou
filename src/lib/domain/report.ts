@@ -41,9 +41,7 @@ export interface ReportModel {
 }
 
 export function buildReport(month: MonthData): ReportModel {
-	// 報告書が使うのは実績だけで、「本日」に依存しない。末日を渡すのは、月が閉じた
-	// 状態として集計するという意味
-	const summary = summarize(month, month.days.at(-1)!.date);
+	const summary = summarize(month);
 	const [year, mon] = month.month.split('-').map(Number);
 
 	return {

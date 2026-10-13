@@ -1,4 +1,4 @@
-import type { DateString, Minutes, MonthData, NonWorkDayType } from './types';
+import type { Minutes, MonthData, NonWorkDayType } from './types';
 import { dailyWorkMinutes } from './workday';
 
 /** 月次集計（SPEC.md §5.2）。単位はすべて分 */
@@ -9,9 +9,9 @@ export interface MonthSummary {
 	plannedMinutes: Minutes;
 	/** 各日の稼働時間の合計 */
 	actualMinutes: Minutes;
-	/** 実績 −（本日までの稼働予定日数 × dailyHours）。貯金か借金か */
+	/** 実績 −（入力済みの稼働予定日数 × dailyHours）。入力した範囲での貯金か借金か */
 	paceMinutes: Minutes;
-	/** 実績 +（本日より後の稼働予定日数 × dailyHours）。このまま働いた場合の月末 */
+	/** 実績 +（未入力の稼働予定日数 × dailyHours）。残りを想定どおり働いた場合の月末 */
 	projectedMinutes: Minutes;
 	/** 下限・上限まであと何分か。超えていれば負になる */
 	toLowerMinutes: Minutes;
@@ -26,17 +26,17 @@ export interface MonthSummary {
 /**
  * 月次集計。
  *
- * `today` を引数で受けるのは、内部で new Date() を呼ぶとテストが実行日に依存する
- * ため。「本日まで」は当日を含む（SPEC.md §5.2）。表示中の月が過去なら全日が
- * 「本日まで」に入り、未来なら 0 日になる。
+ * ペース差分と着地見込みは、日付ではなく入力済みかどうか（稼働区間の有無）で
+ * 稼働予定日を分ける（SPEC.md §5.2）。数日分まとめて入力しても、未入力の日が
+ * 見込みから抜け落ちない。
  */
-export function summarize(month: MonthData, today: DateString): MonthSummary {
+export function summarize(month: MonthData): MonthSummary {
 	const dailyMinutes = month.contract.dailyHours * 60;
 	const lowerMinutes = month.contract.lowerHours * 60;
 	const upperMinutes = month.contract.upperHours * 60;
 
 	let plannedDays = 0;
-	let plannedDaysUntilToday = 0;
+	let enteredPlannedDays = 0;
 	let actualMinutes = 0;
 	const breakdown: Record<NonWorkDayType, number> = {
 		weekend: 0,
@@ -46,24 +46,25 @@ export function summarize(month: MonthData, today: DateString): MonthSummary {
 	};
 
 	for (const day of month.days) {
+		const minutes = dailyWorkMinutes(day);
 		if (day.dayType === 'work') {
 			plannedDays++;
-			if (day.date <= today) plannedDaysUntilToday++;
+			if (minutes !== null) enteredPlannedDays++;
 		} else {
 			breakdown[day.dayType]++;
 		}
-		actualMinutes += dailyWorkMinutes(day) ?? 0;
+		actualMinutes += minutes ?? 0;
 	}
 
 	const plannedMinutes = plannedDays * dailyMinutes;
-	const remainingPlannedDays = plannedDays - plannedDaysUntilToday;
+	const unenteredPlannedDays = plannedDays - enteredPlannedDays;
 
 	return {
 		plannedDays,
 		plannedMinutes,
 		actualMinutes,
-		paceMinutes: actualMinutes - plannedDaysUntilToday * dailyMinutes,
-		projectedMinutes: actualMinutes + remainingPlannedDays * dailyMinutes,
+		paceMinutes: actualMinutes - enteredPlannedDays * dailyMinutes,
+		projectedMinutes: actualMinutes + unenteredPlannedDays * dailyMinutes,
 		toLowerMinutes: lowerMinutes - actualMinutes,
 		toUpperMinutes: upperMinutes - actualMinutes,
 		overMinutes: Math.max(0, actualMinutes - upperMinutes),
