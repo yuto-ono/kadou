@@ -26,9 +26,9 @@ export const DAY_DEFAULTS = {
 /** 区分変更時に workContent へ自動入力される文言（SPEC.md §6.1） */
 export const AUTO_CONTENT: Record<NonWorkDayType, string> = {
 	weekend: '',
-	holiday: '祝日',
-	personal: '休暇',
-	clientClosed: '客先休業'
+	holiday: '',
+	personal: '私用休暇',
+	clientClosed: ''
 };
 
 /** 画面に表示する区分名（SPEC.md §4.2） */

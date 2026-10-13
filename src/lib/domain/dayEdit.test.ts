@@ -22,14 +22,14 @@ describe('applyDayTypeChange', () => {
 		expect(next.workPeriods).toEqual([]);
 	});
 
-	it('区分に応じた文言を自動入力する', () => {
-		expect(applyDayTypeChange(day('2026-09-01'), 'personal').workContent).toBe('休暇');
-		expect(applyDayTypeChange(day('2026-09-01'), 'holiday').workContent).toBe('祝日');
-		expect(applyDayTypeChange(day('2026-09-01'), 'clientClosed').workContent).toBe('客先休業');
+	it('私用休には文言を自動入力する', () => {
+		const next = applyDayTypeChange(day('2026-09-01'), 'personal');
+		expect(next.workContent).toBe('私用休暇');
+		expect(next.contentAutoFilled).toBe(true);
 	});
 
-	it('土日には文言を入れない', () => {
-		const next = applyDayTypeChange(day('2026-09-01'), 'weekend');
+	it.each(['weekend', 'holiday', 'clientClosed'] as const)('%s には文言を入れない', (type) => {
+		const next = applyDayTypeChange(day('2026-09-01'), type);
 		expect(next.workContent).toBe('');
 		expect(next.contentAutoFilled).toBe(false);
 	});
@@ -41,13 +41,15 @@ describe('applyDayTypeChange', () => {
 		expect(next.contentAutoFilled).toBe(false);
 	});
 
-	it('自動入力どうしは差し替える', () => {
+	it('文言のない区分へ移すと自動入力された文言を消す', () => {
 		const filled = applyDayTypeChange(day('2026-09-01'), 'personal');
-		expect(applyDayTypeChange(filled, 'holiday').workContent).toBe('祝日');
+		const next = applyDayTypeChange(filled, 'holiday');
+		expect(next.workContent).toBe('');
+		expect(next.contentAutoFilled).toBe(false);
 	});
 
 	it('work へ戻すと自動入力された文言だけを消す', () => {
-		const filled = applyDayTypeChange(day('2026-09-01'), 'holiday');
+		const filled = applyDayTypeChange(day('2026-09-01'), 'personal');
 		const back = applyDayTypeChange(filled, 'work');
 		expect(back.workContent).toBe('');
 		expect(back.contentAutoFilled).toBe(false);
@@ -67,7 +69,7 @@ describe('applyDayTypeChange', () => {
 describe('suggestContent', () => {
 	const days = [
 		day('2026-09-01', { workContent: '認証基盤のリファクタリング' }),
-		day('2026-09-02', { dayType: 'holiday', workContent: '祝日', contentAutoFilled: true }),
+		day('2026-09-02', { dayType: 'personal', workContent: '私用休暇', contentAutoFilled: true }),
 		day('2026-09-03'),
 		day('2026-09-04')
 	];

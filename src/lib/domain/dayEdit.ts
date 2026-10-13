@@ -24,7 +24,8 @@ export function needsClearConfirm(day: DayRecord, next: DayType): boolean {
  *
  * 作業内容は確認モーダルの対象に含めず、contentAutoFilled の規則に従う
  * （SPEC.md §6.1）。自動入力は workContent が空欄のときだけ行い、既に何か書かれ
- * ていれば触らない。work に戻したときは、自動入力された文言だけを消す。
+ * ていれば触らない。自動入力された文言は区分を変えるたびに置き換え、変更先が空欄の
+ * 区分（work を含む）なら消す。
  */
 export function applyDayTypeChange(day: DayRecord, next: DayType): DayRecord {
 	const cleared =
@@ -41,13 +42,14 @@ export function applyDayTypeChange(day: DayRecord, next: DayType): DayRecord {
 		};
 	}
 
+	// 自動入力された文言は変更先の文言へ置き換える。変更先が空欄なら消す
 	const auto = AUTO_CONTENT[next];
-	const fillable = auto !== '' && (day.workContent === '' || day.contentAutoFilled);
+	const replaceable = day.workContent === '' || day.contentAutoFilled;
 	return {
 		...cleared,
 		dayType: next,
-		workContent: fillable ? auto : day.workContent,
-		contentAutoFilled: fillable
+		workContent: replaceable ? auto : day.workContent,
+		contentAutoFilled: replaceable && auto !== ''
 	};
 }
 
@@ -58,7 +60,7 @@ export function applyDayTypeChange(day: DayRecord, next: DayType): DayRecord {
  * 進むだけで土日にも前回の内容が保存されてしまう。
  *
  * 同じ月の中で当該日より前にあり、手入力された作業内容を持つ最も近い日から取る。
- * 区分変更で自動入力された文言（祝日・休暇・客先休業）は取り出し元にしない。
+ * 区分変更で自動入力された文言（私用休暇）は取り出し元にしない。
  * 月はまたがない。該当する日がなければ null。
  */
 export function suggestContent(days: DayRecord[], index: number): string | null {
