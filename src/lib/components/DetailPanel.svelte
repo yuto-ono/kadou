@@ -108,7 +108,6 @@
 			value={day.journal}
 			label="メモ"
 			multiline
-			placeholder="下限割れや長時間稼働の理由など、後から思い出すための覚え書き"
 			onCommit={(journal) => onChange({ journal })}
 		/>
 	</div>
