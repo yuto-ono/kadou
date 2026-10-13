@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { today } from '$lib/client/clock';
 	import type { DayType } from '$lib/domain/types';
 	import type { MonthStore } from '$lib/state/month.svelte';
 	import DayRow from './DayRow.svelte';
@@ -12,8 +11,6 @@
 	}
 
 	let { store, onConfirmClear }: Props = $props();
-
-	const todayDate = today();
 
 	function changeDayType(date: string, next: DayType) {
 		if (store.needsClearConfirm(date, next)) onConfirmClear(date, next);
@@ -46,7 +43,7 @@
 				{day}
 				issues={store.dayIssues[day.date] ?? []}
 				selected={store.selectedDate === day.date}
-				isToday={day.date === todayDate}
+				isToday={day.date === store.today}
 				suggestion={store.suggestContent(day.date)}
 				onSelect={() => (store.selectedDate = day.date)}
 				onChangeDayType={(next) => changeDayType(day.date, next)}

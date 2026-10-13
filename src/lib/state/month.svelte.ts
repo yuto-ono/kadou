@@ -41,6 +41,11 @@ export class MonthStore {
 	unsaved = $state(false);
 	/** 選択中の行。詳細パネルが開いているかを兼ねる */
 	selectedDate = $state<string | null>(null);
+	/**
+	 * 本日（SPEC.md §5.2）。画面に戻ったときに取り直す。開いたまま日をまたいでも、
+	 * 集計と今日の行が古い日付のまま残らない
+	 */
+	today = $state(today());
 
 	#writer: DebouncedWriter<MonthData>;
 	#maxEndTime: () => string;
@@ -67,7 +72,7 @@ export class MonthStore {
 	}
 
 	summary = $derived<MonthSummary | null>(
-		this.data === null ? null : summarize(this.data, today())
+		this.data === null ? null : summarize(this.data, this.today)
 	);
 
 	/** 入力の検証（SPEC.md §8）。日付を引いて使う。打鍵ごとに再評価される */
@@ -111,6 +116,8 @@ export class MonthStore {
 	 * 読み直さずに案内を出す。読み直しに失敗しても今の表示を残す。
 	 */
 	async refresh(): Promise<void> {
+		// ファイルを読み直さない場合（衝突中など）も日付は進める
+		this.today = today();
 		if (this.state === 'loading') return;
 		await this.flush();
 		if (this.conflict !== null || this.#writer.hasPending) return;
