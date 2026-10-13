@@ -48,7 +48,8 @@
 	--type-personal: #7c5cbf;
 	--type-client-closed: #2563a8;
 
-	--panel-width: 23rem;
+	/* 34rem 以上で作業内容 38 文字が入力欄に収まる。上限はメモ欄の 1 行が長くなりすぎない幅 */
+	--panel-width: clamp(23rem, 30vw, 40rem);
 	--row-height: 2.15rem;
 
 	color-scheme: light;
