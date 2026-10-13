@@ -7,6 +7,7 @@
 	import { WORK_CONTENT_MAX } from '$lib/domain/validate/day';
 	import type { Issue } from '$lib/domain/validate/issue';
 	import { dayTimes } from '$lib/domain/workday';
+	import type { PendingPeriod } from '$lib/state/pendingPeriods.svelte';
 	import PeriodEditor from './PeriodEditor.svelte';
 	import TextField from './TextField.svelte';
 
@@ -28,9 +29,20 @@
 		suggestion: string | null;
 		onChange: (patch: Partial<DayRecord>) => void;
 		onChangeDayType: (next: DayType) => void;
+		pendingPeriod: PendingPeriod | null;
+		onPendingPeriodChange: (period: PendingPeriod | null) => void;
 	}
 
-	let { day, issues, suggestion, onClose, onChange, onChangeDayType }: Props = $props();
+	let {
+		day,
+		issues,
+		suggestion,
+		onClose,
+		onChange,
+		onChangeDayType,
+		pendingPeriod,
+		onPendingPeriodChange
+	}: Props = $props();
 
 	let contentLength = $state(0);
 	const remaining = $derived(WORK_CONTENT_MAX - contentLength);
@@ -74,7 +86,13 @@
 			</p>
 		</div>
 
-		<PeriodEditor {day} issues={periodIssues} onChange={(workPeriods) => onChange({ workPeriods })} />
+		<PeriodEditor
+			{day}
+			issues={periodIssues}
+			pending={pendingPeriod}
+			onChange={(workPeriods) => onChange({ workPeriods })}
+			onPendingChange={onPendingPeriodChange}
+		/>
 	</section>
 
 	<section class="block">

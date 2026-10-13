@@ -16,6 +16,7 @@ import { summarize, type MonthSummary } from '$lib/domain/summary';
 import type { Contract, DayRecord, DayType, MonthData, WorkPeriod } from '$lib/domain/types';
 import { validateDay } from '$lib/domain/validate/day';
 import type { Issue } from '$lib/domain/validate/issue';
+import { pendingPeriods, type PendingPeriod } from './pendingPeriods.svelte';
 
 export type LoadState = 'loading' | 'ready' | 'missing' | 'error';
 
@@ -166,6 +167,7 @@ export class MonthStore {
 		if (this.conflict !== null || this.#version === null) return false;
 		try {
 			await removeMonth(this.month, this.#version);
+			pendingPeriods.discardMonth(this.month);
 			return true;
 		} catch (e) {
 			if (e instanceof ConflictError) {
@@ -190,10 +192,21 @@ export class MonthStore {
 
 	changeDayType(date: string, next: DayType): void {
 		this.#replaceDay(date, (day) => applyDayTypeChange(day, next));
+		// 稼働区間のクリアに合わせて捨てる。確認の要否には含めない（SPEC.md §6.1）
+		pendingPeriods.set(date, null);
 	}
 
 	setPeriods(date: string, workPeriods: WorkPeriod[]): void {
 		this.#replaceDay(date, (day) => ({ ...day, workPeriods }));
+	}
+
+	/** 入力途中の区間（SPEC.md §6.1「稼働区間の入力」）。データには入れない */
+	pendingPeriod(date: string): PendingPeriod | null {
+		return pendingPeriods.get(date);
+	}
+
+	setPendingPeriod(date: string, period: PendingPeriod | null): void {
+		pendingPeriods.set(date, period);
 	}
 
 	/**

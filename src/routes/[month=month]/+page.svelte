@@ -167,7 +167,7 @@
 			</div>
 
 			{#if store.selectedDay}
-				<!-- 別の日へ移ったら作り直す。入力途中の区間を持ち越さない（SPEC.md §6.1） -->
+				<!-- 別の日へ移ったら作り直す。入力欄の編集途中の値を別の日へ持ち越さない -->
 				{#key store.selectedDay.date}
 					<DetailPanel
 						day={store.selectedDay}
@@ -180,6 +180,8 @@
 							if (store!.needsClearConfirm(date, next)) pendingChange = { date, next };
 							else store!.changeDayType(date, next);
 						}}
+						pendingPeriod={store.pendingPeriod(store.selectedDay.date)}
+						onPendingPeriodChange={(period) => store?.setPendingPeriod(store.selectedDate!, period)}
 					/>
 				{/key}
 			{/if}

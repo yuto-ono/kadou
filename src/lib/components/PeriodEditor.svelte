@@ -2,9 +2,10 @@
 	import { tick } from 'svelte';
 	import { messageOf } from '$lib/domain/messages';
 	import { formatDuration } from '$lib/domain/time';
-	import type { DayRecord, TimeString, WorkPeriod } from '$lib/domain/types';
+	import type { DayRecord, WorkPeriod } from '$lib/domain/types';
 	import type { Issue } from '$lib/domain/validate/issue';
 	import { dayTimes } from '$lib/domain/workday';
+	import type { PendingPeriod } from '$lib/state/pendingPeriods.svelte';
 	import TimeCell from './TimeCell.svelte';
 
 	/**
@@ -13,19 +14,19 @@
 	 * 区間を縦に並べ、追加ボタンで増やす。並べ替えはパネルを閉じたときに行う。
 	 * 入力の途中で並べ替えると行が動いてフォーカスが外れる（SPEC.md §4.3）。
 	 *
-	 * 追加した区間は開始・終了とも空欄で始め、両方そろうまではこのコンポーネントの
-	 * 中だけに持つ。データには完成した区間だけを置く。パネルを閉じるか別の日へ移ると
-	 * コンポーネントごと破棄され、片方だけの区間も消える。
+	 * 追加した区間は開始・終了とも空欄で始め、両方そろうまではデータに入れず
+	 * `pending` として外に持たせる。パネルを閉じたり別の日へ移ったりしても残すため。
 	 */
 	interface Props {
 		day: DayRecord;
 		issues: Issue[];
+		pending: PendingPeriod | null;
 		onChange: (periods: WorkPeriod[]) => void;
+		onPendingChange: (pending: PendingPeriod | null) => void;
 	}
 
-	let { day, issues, onChange }: Props = $props();
+	let { day, issues, pending, onChange, onPendingChange }: Props = $props();
 
-	let pending = $state<{ start: TimeString | null; end: TimeString | null } | null>(null);
 	let container: HTMLElement;
 
 	const times = $derived(dayTimes(day));
@@ -40,19 +41,19 @@
 	}
 
 	async function add() {
-		pending = { start: null, end: null };
+		onPendingChange({ start: null, end: null });
 		await tick();
 		container.querySelector<HTMLInputElement>('.pending input')?.focus();
 	}
 
-	function fill(patch: Partial<NonNullable<typeof pending>>) {
+	function fill(patch: Partial<PendingPeriod>) {
 		if (pending === null) return;
 		const next = { ...pending, ...patch };
 		if (next.start !== null && next.end !== null) {
 			onChange([...day.workPeriods, { start: next.start, end: next.end }]);
-			pending = null;
+			onPendingChange(null);
 		} else {
-			pending = next;
+			onPendingChange(next);
 		}
 	}
 </script>
@@ -99,7 +100,7 @@
 			/>
 			<span class="sep" aria-hidden="true">〜</span>
 			<TimeCell value={pending.end} quiet={false} label="追加する区間の終了" onCommit={(v) => fill({ end: v })} />
-			<button onclick={() => (pending = null)} aria-label="追加する区間を取り消す">取消</button>
+			<button onclick={() => onPendingChange(null)} aria-label="追加する区間を取り消す">取消</button>
 		</div>
 	{:else if day.workPeriods.length === 0}
 		<p class="hint">稼働区間はありません</p>
