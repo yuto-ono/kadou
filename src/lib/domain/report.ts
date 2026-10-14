@@ -1,4 +1,4 @@
-import { weekdayLabel } from './calendar';
+import { monthLabel, weekdayLabel } from './calendar';
 import { summarize } from './summary';
 import { formatDuration, toReportTime } from './time';
 import type { DateString, MonthData } from './types';
@@ -42,11 +42,10 @@ export interface ReportModel {
 
 export function buildReport(month: MonthData): ReportModel {
 	const summary = summarize(month);
-	const [year, mon] = month.month.split('-').map(Number);
 
 	return {
 		title: '作業報告書',
-		targetMonth: `${year}年${mon}月`,
+		targetMonth: monthLabel(month.month),
 		workerName: month.contract.workerName,
 		rows: month.days.map(buildRow),
 		footer: {

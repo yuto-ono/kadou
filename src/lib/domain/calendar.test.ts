@@ -8,7 +8,9 @@ import {
 	isDateString,
 	isMonthString,
 	isWeekend,
+	monthLabel,
 	monthStringOf,
+	shiftMonth,
 	weekdayLabel
 } from './calendar';
 import { CONTRACT_DEFAULTS } from './defaults';
@@ -88,5 +90,24 @@ describe('現在時刻からの変換', () => {
 		const d = new Date(2026, 8, 3, 23, 30);
 		expect(monthStringOf(d)).toBe('2026-09');
 		expect(dateStringOf(d)).toBe('2026-09-03');
+	});
+});
+
+describe('shiftMonth', () => {
+	it('暦の上で隣の月を返す', () => {
+		expect(shiftMonth('2026-09', -1)).toBe('2026-08');
+		expect(shiftMonth('2026-09', 1)).toBe('2026-10');
+	});
+
+	it('年をまたぐ', () => {
+		expect(shiftMonth('2026-01', -1)).toBe('2025-12');
+		expect(shiftMonth('2026-12', 1)).toBe('2027-01');
+	});
+});
+
+describe('monthLabel', () => {
+	it('月を 0 埋めせずに出す', () => {
+		expect(monthLabel('2026-09')).toBe('2026年9月');
+		expect(monthLabel('2026-10')).toBe('2026年10月');
 	});
 });

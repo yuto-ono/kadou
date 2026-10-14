@@ -52,6 +52,19 @@ export function monthOf(date: DateString): MonthString {
 	return date.slice(0, 7);
 }
 
+/** 人が読む年月。`2026年9月`（月セレクタと SPEC.md §7.1 の対象月） */
+export function monthLabel(month: MonthString): string {
+	const [y, m] = month.split('-').map(Number);
+	return `${y}年${m}月`;
+}
+
+/** 暦の上で delta か月ずらした月（SPEC.md §4.4 の前月・翌月への移動） */
+export function shiftMonth(month: MonthString, delta: number): MonthString {
+	const [y, m] = month.split('-').map(Number);
+	const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+	return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 /** 月に属する 1 日〜末日の日付をすべて返す */
 export function datesOfMonth(month: MonthString): DateString[] {
 	const count = daysInMonth(month);
