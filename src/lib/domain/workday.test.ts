@@ -17,12 +17,12 @@ describe('dayTimes', () => {
 		expect(dayTimes(d)?.breakMinutes).toBe(75);
 	});
 
-	it('区間が 1 件なら休憩は空欄', () => {
-		expect(dayTimes(workDay('2026-09-01', ['09:00', '18:00']))?.breakMinutes).toBeNull();
+	it('区間が 1 件なら休憩は 0 分', () => {
+		expect(dayTimes(workDay('2026-09-01', ['09:00', '18:00']))?.breakMinutes).toBe(0);
 	});
 
-	it('区間がすべて隣接していれば休憩は空欄', () => {
-		expect(dayTimes(workDay('2026-09-01', ['09:00', '12:00'], ['12:00', '18:00']))?.breakMinutes).toBeNull();
+	it('区間がすべて隣接していれば休憩は 0 分', () => {
+		expect(dayTimes(workDay('2026-09-01', ['09:00', '12:00'], ['12:00', '18:00']))?.breakMinutes).toBe(0);
 	});
 
 	it('並べ替える前でも同じ値になる', () => {
@@ -43,7 +43,7 @@ describe('dayTimes', () => {
 	});
 
 	it('区間が重なっていても休憩を負にしない', () => {
-		expect(dayTimes(workDay('2026-09-01', ['09:00', '13:00'], ['12:00', '18:00']))?.breakMinutes).toBeNull();
+		expect(dayTimes(workDay('2026-09-01', ['09:00', '13:00'], ['12:00', '18:00']))?.breakMinutes).toBe(0);
 	});
 
 	it('稼働区間がない日は null', () => {

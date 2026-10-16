@@ -92,7 +92,7 @@
 	</td>
 	<td class="num faint">
 		<button class="open tnum" onclick={onSelect} tabindex="-1">
-			{times?.breakMinutes == null ? '' : formatDuration(times.breakMinutes)}
+			{times ? formatDuration(times.breakMinutes) : ''}
 		</button>
 	</td>
 	<td class="num worked">

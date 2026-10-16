@@ -16,8 +16,7 @@ export interface DayTimes {
 	start: TimeString;
 	end: TimeString;
 	workMinutes: Minutes;
-	/** 区間が 1 件以下の日と、区間がすべて隣接していて 0 分になる日は null（空欄） */
-	breakMinutes: Minutes | null;
+	breakMinutes: Minutes;
 }
 
 /** 稼働区間がない日は null。「未入力」と「0 分」を区別する */
@@ -27,9 +26,9 @@ export function dayTimes(day: DayRecord): DayTimes | null {
 
 	const workMinutes = periodTotal(day.workPeriods);
 	// 区間が重なっていると稼働時間を二重に数え、差が負になる。重なりは検証で
-	// エラーにするので、ここでは 0 分と同じ扱い（空欄）に倒す
+	// エラーにするので、ここでは 0 分に倒す
 	const gap = toMinutes(span.end) - toMinutes(span.start) - workMinutes;
-	return { ...span, workMinutes, breakMinutes: gap > 0 ? gap : null };
+	return { ...span, workMinutes, breakMinutes: Math.max(gap, 0) };
 }
 
 /**

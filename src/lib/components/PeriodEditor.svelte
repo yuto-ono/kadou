@@ -61,7 +61,7 @@
 <div class="periods" bind:this={container}>
 	<div class="head">
 		<h3>稼働区間</h3>
-		<span class="total">休憩 {times?.breakMinutes == null ? '—' : formatDuration(times.breakMinutes)}</span>
+		<span class="total">休憩 {times ? formatDuration(times.breakMinutes) : '—'}</span>
 	</div>
 
 	{#each day.workPeriods as period, index (index)}

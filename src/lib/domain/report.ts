@@ -68,8 +68,8 @@ function buildRow(day: MonthData['days'][number]): ReportRow {
 		// 24 時超えは翌日表記へ変換する。開始時刻は 0:00〜23:59 に限られるため対象外
 		start: times?.start ?? '',
 		end: times === null ? '' : toReportTime(times.end),
-		// 休憩がない日は空欄にする（SPEC.md §7.1）
-		breakTime: times?.breakMinutes == null ? '' : formatDuration(times.breakMinutes),
+		// 休憩がない稼働日も 0:00 と明記する（SPEC.md §7.1）
+		breakTime: times ? formatDuration(times.breakMinutes) : '',
 		workTime: times === null ? '' : formatDuration(times.workMinutes),
 		workContent: day.workContent
 	};

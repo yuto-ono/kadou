@@ -39,7 +39,7 @@ describe('明細表', () => {
 		expect(rowOf(m, '2026-09-01')).toMatchObject({ start: '13:00', end: '翌2:00' });
 	});
 
-	it('休憩は合計のみを出し、ない日は空欄にする', () => {
+	it('休憩は合計のみを出し、ない稼働日は 0:00 と明記する', () => {
 		const m = september();
 		setDay(m, '2026-09-01', {
 			workPeriods: [
@@ -50,7 +50,7 @@ describe('明細表', () => {
 		});
 		setDay(m, '2026-09-02', { workPeriods: [{ start: '09:00', end: '18:00' }] });
 		expect(rowOf(m, '2026-09-01').breakTime).toBe('1:15');
-		expect(rowOf(m, '2026-09-02').breakTime).toBe('');
+		expect(rowOf(m, '2026-09-02').breakTime).toBe('0:00');
 	});
 
 	it('稼働しない日は時刻も稼働時間も空欄', () => {
