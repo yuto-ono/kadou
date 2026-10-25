@@ -1,6 +1,6 @@
 import { Document } from 'yaml';
-import { DAY_DEFAULTS } from '$lib/domain/defaults';
-import type { DayRecord, MonthData } from '$lib/domain/types';
+import { DAY_DEFAULTS } from '#lib/domain/defaults.ts';
+import type { DayRecord, MonthData } from '#lib/domain/types.ts';
 import { blockLiteral, quoted } from './scalars';
 
 /**

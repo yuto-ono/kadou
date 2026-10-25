@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { emptyMonth } from '$lib/domain/calendar';
-import { CONTRACT_DEFAULTS } from '$lib/domain/defaults';
+import { emptyMonth } from '#lib/domain/calendar.ts';
+import { CONTRACT_DEFAULTS } from '#lib/domain/defaults.ts';
 import { journalFilename, mergeJournals, parseJournal, serializeJournal } from './journal';
 
 describe('serializeJournal', () => {

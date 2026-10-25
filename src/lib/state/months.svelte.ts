@@ -1,5 +1,5 @@
-import { fetchMonths } from '$lib/client/api';
-import { monthStringOf } from '$lib/domain/calendar';
+import { fetchMonths } from '#lib/client/api.ts';
+import { monthStringOf } from '#lib/domain/calendar.ts';
 
 /** 月の一覧（SPEC.md §4.4）。直近の月から降順 */
 export class MonthsStore {

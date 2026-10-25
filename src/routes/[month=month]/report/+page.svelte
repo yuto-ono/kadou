@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { fetchMonthIfChanged, type MonthVersion } from '$lib/client/api';
-	import { onReturn } from '$lib/client/return';
-	import ReportSheet from '$lib/components/report/ReportSheet.svelte';
-	import { buildReport, type ReportModel } from '$lib/domain/report';
+	import { fetchMonthIfChanged, type MonthVersion } from '#lib/client/api.ts';
+	import { onReturn } from '#lib/client/return.ts';
+	import ReportSheet from '#lib/components/report/ReportSheet.svelte';
+	import { buildReport, type ReportModel } from '#lib/domain/report.ts';
 	import type { PageProps } from './$types';
 
 	/** 報告書プレビュー（SPEC.md §6.2）。A4 縦のレイアウトでそのまま表示する */

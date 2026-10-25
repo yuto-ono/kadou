@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { beforeNavigate, goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { onReturn } from '$lib/client/return';
-	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
-	import DayTable from '$lib/components/DayTable.svelte';
-	import DetailPanel from '$lib/components/DetailPanel.svelte';
-	import IssueList from '$lib/components/IssueList.svelte';
-	import MonthSelector from '$lib/components/MonthSelector.svelte';
-	import MonthSummary from '$lib/components/MonthSummary.svelte';
-	import TextField from '$lib/components/TextField.svelte';
-	import { CONTRACT_TEMPLATE } from '$lib/persistence/contract-template';
-	import type { DayType } from '$lib/domain/types';
-	import { ContractStore } from '$lib/state/contract.svelte';
-	import { MonthStore } from '$lib/state/month.svelte';
-	import { MonthsStore } from '$lib/state/months.svelte';
+	import { onReturn } from '#lib/client/return.ts';
+	import ConfirmDialog from '#lib/components/ConfirmDialog.svelte';
+	import DayTable from '#lib/components/DayTable.svelte';
+	import DetailPanel from '#lib/components/DetailPanel.svelte';
+	import IssueList from '#lib/components/IssueList.svelte';
+	import MonthSelector from '#lib/components/MonthSelector.svelte';
+	import MonthSummary from '#lib/components/MonthSummary.svelte';
+	import TextField from '#lib/components/TextField.svelte';
+	import { CONTRACT_TEMPLATE } from '#lib/persistence/contract-template.ts';
+	import type { DayType } from '#lib/domain/types.ts';
+	import { ContractStore } from '#lib/state/contract.svelte.ts';
+	import { MonthStore } from '#lib/state/month.svelte.ts';
+	import { MonthsStore } from '#lib/state/months.svelte.ts';
 	import type { PageProps } from './$types';
 
 	/** 稼働入力（SPEC.md §6.1） */
@@ -61,7 +61,7 @@
 	async function remove() {
 		confirmDelete = false;
 		if (!(await store?.remove())) return;
-		await goto(resolve('/'), { invalidateAll: true });
+		await goto(resolve('/'), { refreshAll: true });
 	}
 
 	function closePanel() {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { parseTimeInput, type TimeParseFailure } from '$lib/domain/time';
+	import { parseTimeInput, type TimeParseFailure } from '#lib/domain/time.ts';
 
 	/**
 	 * 時刻の入力欄（SPEC.md §8「時刻入力の形式」）。

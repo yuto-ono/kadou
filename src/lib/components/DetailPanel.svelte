@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { weekdayLabel } from '$lib/domain/calendar';
-	import { DAY_TYPES, DAY_TYPE_LABEL } from '$lib/domain/defaults';
-	import { messageOf } from '$lib/domain/messages';
-	import { formatDuration } from '$lib/domain/time';
-	import type { DayRecord, DayType } from '$lib/domain/types';
-	import { WORK_CONTENT_MAX } from '$lib/domain/validate/day';
-	import type { Issue } from '$lib/domain/validate/issue';
-	import { dayTimes } from '$lib/domain/workday';
-	import type { PendingPeriod } from '$lib/state/pendingPeriods.svelte';
+	import { weekdayLabel } from '#lib/domain/calendar.ts';
+	import { DAY_TYPES, DAY_TYPE_LABEL } from '#lib/domain/defaults.ts';
+	import { messageOf } from '#lib/domain/messages.ts';
+	import { formatDuration } from '#lib/domain/time.ts';
+	import type { DayRecord, DayType } from '#lib/domain/types.ts';
+	import { WORK_CONTENT_MAX } from '#lib/domain/validate/day.ts';
+	import type { Issue } from '#lib/domain/validate/issue.ts';
+	import { dayTimes } from '#lib/domain/workday.ts';
+	import type { PendingPeriod } from '#lib/state/pendingPeriods.svelte.ts';
 	import PeriodEditor from './PeriodEditor.svelte';
 	import TextField from './TextField.svelte';
 

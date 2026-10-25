@@ -1,4 +1,4 @@
-import type { TimeString } from '$lib/domain/types';
+import type { TimeString } from '#lib/domain/types.ts';
 
 /** 開始・終了の片方しか入力されていない区間（SPEC.md §6.1「稼働区間の入力」） */
 export interface PendingPeriod {

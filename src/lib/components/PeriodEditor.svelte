@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { messageOf } from '$lib/domain/messages';
-	import { formatDuration } from '$lib/domain/time';
-	import type { DayRecord, WorkPeriod } from '$lib/domain/types';
-	import type { Issue } from '$lib/domain/validate/issue';
-	import { dayTimes } from '$lib/domain/workday';
-	import type { PendingPeriod } from '$lib/state/pendingPeriods.svelte';
+	import { messageOf } from '#lib/domain/messages.ts';
+	import { formatDuration } from '#lib/domain/time.ts';
+	import type { DayRecord, WorkPeriod } from '#lib/domain/types.ts';
+	import type { Issue } from '#lib/domain/validate/issue.ts';
+	import { dayTimes } from '#lib/domain/workday.ts';
+	import type { PendingPeriod } from '#lib/state/pendingPeriods.svelte.ts';
 	import TimeCell from './TimeCell.svelte';
 
 	/**

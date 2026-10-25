@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ReportModel } from '$lib/domain/report';
+	import type { ReportModel } from '#lib/domain/report.ts';
 
 	/** 報告書の 1 ページ（SPEC.md §7.1）。A4 縦 1 ページに収める */
 	interface Props {

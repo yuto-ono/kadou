@@ -2,7 +2,15 @@ import js from '@eslint/js';
 import svelte from 'eslint-plugin-svelte';
 import globals from 'globals';
 import ts from 'typescript-eslint';
-import svelteConfig from './svelte.config.js';
+import { loadConfig } from '@sveltejs/load-config';
+
+// SvelteKit 3 から Svelte の設定は vite.config.ts の sveltekit() に渡す。
+// 読めないまま進むと runes の指定が黙って lint から外れるので、止める
+const loaded = await loadConfig('./', { traverse: false });
+if (!loaded || 'error' in loaded) {
+	throw new Error('vite.config.ts から Svelte の設定を読めません', { cause: loaded?.error });
+}
+const svelteConfig = loaded.config;
 
 /**
  * 層の境界（AGENTS.md「ドメインロジックはフレームワークから切り離す」）。

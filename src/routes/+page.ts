@@ -1,6 +1,6 @@
 import { redirect } from '@sveltejs/kit';
-import { fetchMonths } from '$lib/client/api';
-import { monthStringOf } from '$lib/domain/calendar';
+import { fetchMonths } from '#lib/client/api.ts';
+import { monthStringOf } from '#lib/domain/calendar.ts';
 import type { PageLoad } from './$types';
 
 /**

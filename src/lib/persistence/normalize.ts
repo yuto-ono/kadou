@@ -1,7 +1,7 @@
-import { sortPeriods } from '$lib/domain/periods';
-import { datesOfMonth, emptyDay, toSnapshot } from '$lib/domain/calendar';
-import { DAY_DEFAULTS } from '$lib/domain/defaults';
-import type { DayRecord, MonthData } from '$lib/domain/types';
+import { sortPeriods } from '#lib/domain/periods.ts';
+import { datesOfMonth, emptyDay, toSnapshot } from '#lib/domain/calendar.ts';
+import { DAY_DEFAULTS } from '#lib/domain/defaults.ts';
+import type { DayRecord, MonthData } from '#lib/domain/types.ts';
 
 /**
  * 月次データの正規化。

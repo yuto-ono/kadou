@@ -1,5 +1,5 @@
-import type { Contract, MonthData } from '$lib/domain/types';
-import type { Issue } from '$lib/domain/validate/issue';
+import type { Contract, MonthData } from '#lib/domain/types.ts';
+import type { Issue } from '#lib/domain/validate/issue.ts';
 
 /** API クライアント（SPEC.md §4.5）。ワイヤは JSON */
 
@@ -99,7 +99,12 @@ export async function saveMonth(
 }
 
 export async function removeMonth(month: string, version: string): Promise<void> {
-	await request(`/api/months/${month}`, { method: 'DELETE', headers: precondition(version) });
+	// 本文はないが content-type を付ける。ないと SvelteKit 3 の CSRF 判定がフォーム送信として扱い、
+	// adapter-node が自身の origin を https と見なすため 403 になる
+	await request(`/api/months/${month}`, {
+		method: 'DELETE',
+		headers: { 'content-type': 'application/json', ...precondition(version) }
+	});
 }
 
 function precondition(version: MonthVersion): Record<string, string> {

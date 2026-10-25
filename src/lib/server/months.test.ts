@@ -2,10 +2,10 @@ import { mkdtemp, readdir, readFile, utimes, writeFile, mkdir } from 'node:fs/pr
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { emptyMonth } from '$lib/domain/calendar';
-import { CONTRACT_DEFAULTS } from '$lib/domain/defaults';
-import type { MonthData } from '$lib/domain/types';
-import { MonthSyntaxError } from '$lib/persistence/month-parse';
+import { emptyMonth } from '#lib/domain/calendar.ts';
+import { CONTRACT_DEFAULTS } from '#lib/domain/defaults.ts';
+import type { MonthData } from '#lib/domain/types.ts';
+import { MonthSyntaxError } from '#lib/persistence/month-parse.ts';
 import {
 	currentVersion,
 	deleteMonth,

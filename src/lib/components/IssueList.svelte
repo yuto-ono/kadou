@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { messageOf } from '$lib/domain/messages';
-	import type { Issue } from '$lib/domain/validate/issue';
+	import { messageOf } from '#lib/domain/messages.ts';
+	import type { Issue } from '#lib/domain/validate/issue.ts';
 
 	interface Props {
 		title: string;

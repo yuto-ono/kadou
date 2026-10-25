@@ -1,7 +1,7 @@
 import { parse, YAMLParseError } from 'yaml';
-import { CONTRACT_DEFAULTS } from '$lib/domain/defaults';
-import { isTimeString, parseTimeInput } from '$lib/domain/time';
-import type { Contract } from '$lib/domain/types';
+import { CONTRACT_DEFAULTS } from '#lib/domain/defaults.ts';
+import { isTimeString, parseTimeInput } from '#lib/domain/time.ts';
+import type { Contract } from '#lib/domain/types.ts';
 
 /** contract.yaml が YAML として読めなかった場合 */
 export class ContractSyntaxError extends Error {}

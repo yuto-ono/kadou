@@ -1,4 +1,4 @@
-import { CONTRACT_DEFAULTS } from '$lib/domain/defaults';
+import { CONTRACT_DEFAULTS } from '#lib/domain/defaults.ts';
 
 /**
  * contract.yaml の雛形（SPEC.md §4.1 / §4.5）。

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { DayType } from '$lib/domain/types';
-	import type { MonthStore } from '$lib/state/month.svelte';
+	import type { DayType } from '#lib/domain/types.ts';
+	import type { MonthStore } from '#lib/state/month.svelte.ts';
 	import DayRow from './DayRow.svelte';
 
 	/** 一覧（SPEC.md §6.1）。1 日〜末日の行が並ぶ */

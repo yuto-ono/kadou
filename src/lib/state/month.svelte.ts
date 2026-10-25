@@ -6,16 +6,16 @@ import {
 	removeMonth,
 	saveMonth,
 	type MonthVersion
-} from '$lib/client/api';
-import { today } from '$lib/client/clock';
-import { createDebouncedWriter, type DebouncedWriter } from '$lib/client/debounce';
-import { emptyMonth, toSnapshot } from '$lib/domain/calendar';
-import { applyDayTypeChange, suggestContent, needsClearConfirm } from '$lib/domain/dayEdit';
-import { sortPeriods } from '$lib/domain/periods';
-import { summarize, type MonthSummary } from '$lib/domain/summary';
-import type { Contract, DayRecord, DayType, MonthData, WorkPeriod } from '$lib/domain/types';
-import { validateDay } from '$lib/domain/validate/day';
-import type { Issue } from '$lib/domain/validate/issue';
+} from '#lib/client/api.ts';
+import { today } from '#lib/client/clock.ts';
+import { createDebouncedWriter, type DebouncedWriter } from '#lib/client/debounce.ts';
+import { emptyMonth, toSnapshot } from '#lib/domain/calendar.ts';
+import { applyDayTypeChange, suggestContent, needsClearConfirm } from '#lib/domain/dayEdit.ts';
+import { sortPeriods } from '#lib/domain/periods.ts';
+import { summarize, type MonthSummary } from '#lib/domain/summary.ts';
+import type { Contract, DayRecord, DayType, MonthData, WorkPeriod } from '#lib/domain/types.ts';
+import { validateDay } from '#lib/domain/validate/day.ts';
+import type { Issue } from '#lib/domain/validate/issue.ts';
 import { pendingPeriods, type PendingPeriod } from './pendingPeriods.svelte';
 
 export type LoadState = 'loading' | 'ready' | 'missing' | 'error';

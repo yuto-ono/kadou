@@ -1,17 +1,17 @@
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import { DAY_DEFAULTS } from '$lib/domain/defaults';
-import type { MonthData } from '$lib/domain/types';
+import { DAY_DEFAULTS } from '#lib/domain/defaults.ts';
+import type { MonthData } from '#lib/domain/types.ts';
 import {
 	journalFilename,
 	mergeJournals,
 	serializeJournal,
 	type JournalFile
-} from '$lib/persistence/journal';
-import { parseMonth, type ParsedMonth } from '$lib/persistence/month-parse';
-import { serializeMonth } from '$lib/persistence/month-serialize';
-import { normalizeMonth } from '$lib/persistence/normalize';
+} from '#lib/persistence/journal.ts';
+import { parseMonth, type ParsedMonth } from '#lib/persistence/month-parse.ts';
+import { serializeMonth } from '#lib/persistence/month-serialize.ts';
+import { normalizeMonth } from '#lib/persistence/normalize.ts';
 import {
 	deleteDir,
 	deleteDirIfEmpty,

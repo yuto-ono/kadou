@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { DAY_TYPE_LABEL } from '$lib/domain/defaults';
-	import type { MonthSummary } from '$lib/domain/summary';
-	import { formatDuration, formatSignedDuration } from '$lib/domain/time';
-	import type { ContractSnapshot, NonWorkDayType } from '$lib/domain/types';
+	import { DAY_TYPE_LABEL } from '#lib/domain/defaults.ts';
+	import type { MonthSummary } from '#lib/domain/summary.ts';
+	import { formatDuration, formatSignedDuration } from '#lib/domain/time.ts';
+	import type { ContractSnapshot, NonWorkDayType } from '#lib/domain/types.ts';
 	import SettlementBar from './SettlementBar.svelte';
 
 	/**

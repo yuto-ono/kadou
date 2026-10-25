@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateContract } from '$lib/domain/validate/contract';
+import { validateContract } from '#lib/domain/validate/contract.ts';
 import { ContractSyntaxError, parseContract } from './contract-parse';
 import { CONTRACT_TEMPLATE } from './contract-template';
 

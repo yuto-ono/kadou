@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { emptyMonth } from '$lib/domain/calendar';
-import { CONTRACT_DEFAULTS } from '$lib/domain/defaults';
-import type { MonthData } from '$lib/domain/types';
+import { emptyMonth } from '#lib/domain/calendar.ts';
+import { CONTRACT_DEFAULTS } from '#lib/domain/defaults.ts';
+import type { MonthData } from '#lib/domain/types.ts';
 import { MonthSyntaxError, parseMonth } from './month-parse';
 import { serializeMonth } from './month-serialize';
 import { normalizeMonth } from './normalize';

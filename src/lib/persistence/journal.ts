@@ -1,6 +1,6 @@
-import { isDateString, monthOf, weekdayLabel } from '$lib/domain/calendar';
-import type { DateString, MonthData, MonthString } from '$lib/domain/types';
-import { issue, type Issue } from '$lib/domain/validate/issue';
+import { isDateString, monthOf, weekdayLabel } from '#lib/domain/calendar.ts';
+import type { DateString, MonthData, MonthString } from '#lib/domain/types.ts';
+import { issue, type Issue } from '#lib/domain/validate/issue.ts';
 import { stripOneTrailingNewline } from './scalars';
 
 /**

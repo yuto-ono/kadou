@@ -1,4 +1,4 @@
-import { dateStringOf } from '$lib/domain/calendar';
+import { dateStringOf } from '#lib/domain/calendar.ts';
 
 /**
  * 現在時刻を読む唯一の場所。

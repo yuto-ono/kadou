@@ -1,7 +1,7 @@
-import { error, json } from '@sveltejs/kit';
-import { ContractSyntaxError, parseContract } from '$lib/persistence/contract-parse';
-import { readTextFile } from '$lib/server/files';
-import { contractPath } from '$lib/server/paths';
+import { error } from '@sveltejs/kit';
+import { ContractSyntaxError, parseContract } from '#lib/persistence/contract-parse.ts';
+import { readTextFile } from '#lib/server/files.ts';
+import { contractPath } from '#lib/server/paths.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -15,7 +15,7 @@ export const GET: RequestHandler = async () => {
 	if (file === null) error(404, 'contract.yaml がありません');
 
 	try {
-		return json({ data: parseContract(file.text) });
+		return Response.json({ data: parseContract(file.text) });
 	} catch (e) {
 		if (e instanceof ContractSyntaxError) error(422, e.message);
 		throw e;

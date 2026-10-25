@@ -1,7 +1,7 @@
 import { parse, YAMLParseError } from 'yaml';
-import { isDateString, isWeekend, monthOf } from '$lib/domain/calendar';
-import { CONTRACT_DEFAULTS, DAY_DEFAULTS, DAY_TYPES } from '$lib/domain/defaults';
-import { fromMinutes, isTimeString, parseTimeInput } from '$lib/domain/time';
+import { isDateString, isWeekend, monthOf } from '#lib/domain/calendar.ts';
+import { CONTRACT_DEFAULTS, DAY_DEFAULTS, DAY_TYPES } from '#lib/domain/defaults.ts';
+import { fromMinutes, isTimeString, parseTimeInput } from '#lib/domain/time.ts';
 import type {
 	ContractSnapshot,
 	DayRecord,
@@ -10,8 +10,8 @@ import type {
 	MonthString,
 	TimeString,
 	WorkPeriod
-} from '$lib/domain/types';
-import { issue, type Issue } from '$lib/domain/validate/issue';
+} from '#lib/domain/types.ts';
+import { issue, type Issue } from '#lib/domain/validate/issue.ts';
 import { normalizeMonth } from './normalize';
 import { stripOneTrailingNewline } from './scalars';
 

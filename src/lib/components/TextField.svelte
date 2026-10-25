@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { tick } from 'svelte';
-	import { contentLength } from '$lib/domain/validate/day';
+	import { contentLength } from '#lib/domain/validate/day.ts';
 
 	/**
 	 * 文字の入力欄（SPEC.md §6.1「入力欄の確定」）。

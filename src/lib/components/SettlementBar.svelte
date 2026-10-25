@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { formatDuration } from '$lib/domain/time';
-	import type { Minutes } from '$lib/domain/types';
+	import { formatDuration } from '#lib/domain/time.ts';
+	import type { Minutes } from '#lib/domain/types.ts';
 
 	/**
 	 * 精算幅に対する位置（SPEC.md §5.2）。

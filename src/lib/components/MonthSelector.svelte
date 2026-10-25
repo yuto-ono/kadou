@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { monthLabel, monthStringOf, shiftMonth } from '$lib/domain/calendar';
+	import { monthLabel, monthStringOf, shiftMonth } from '#lib/domain/calendar.ts';
 
 	/**
 	 * 月の選択（SPEC.md §4.4）。直近の月から降順に並べる。

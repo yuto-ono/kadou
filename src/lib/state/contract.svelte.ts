@@ -1,7 +1,7 @@
-import { fetchContract, NotFoundError } from '$lib/client/api';
-import type { Contract } from '$lib/domain/types';
-import { blocksMonthCreation, validateContract } from '$lib/domain/validate/contract';
-import type { Issue } from '$lib/domain/validate/issue';
+import { fetchContract, NotFoundError } from '#lib/client/api.ts';
+import type { Contract } from '#lib/domain/types.ts';
+import { blocksMonthCreation, validateContract } from '#lib/domain/validate/contract.ts';
+import type { Issue } from '#lib/domain/validate/issue.ts';
 
 /**
  * 契約設定（SPEC.md §4.1）。

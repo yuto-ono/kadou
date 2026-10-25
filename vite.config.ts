@@ -1,8 +1,15 @@
+import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [
+		sveltekit({
+			adapter: adapter(),
+			// Svelte 4 の store 記法を使わない（AGENTS.md「Svelte 5 runes を使う」）
+			compilerOptions: { runes: true }
+		})
+	],
 
 	// ファイルを書き込む権限を持つため、外部から到達できる状態にしない（SPEC.md §4.5）。
 	// ポートを固定するのは、取られていたら黙って別ポートへ逃げるのを防ぐため

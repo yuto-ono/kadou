@@ -1,6 +1,6 @@
-import { error, json } from '@sveltejs/kit';
-import type { MonthData } from '$lib/domain/types';
-import { MonthSyntaxError } from '$lib/persistence/month-parse';
+import { error } from '@sveltejs/kit';
+import type { MonthData } from '#lib/domain/types.ts';
+import { MonthSyntaxError } from '#lib/persistence/month-parse.ts';
 import {
 	currentVersion,
 	deleteMonth,
@@ -9,7 +9,7 @@ import {
 	VersionMismatchError,
 	writeMonth,
 	type Precondition
-} from '$lib/server/months';
+} from '#lib/server/months.ts';
 import type { RequestHandler } from './$types';
 
 /** 壊れたボディで正しいファイルを置き換えないための、ごく粗い上限 */
@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ params, request }) => {
 		const parsed = await readMonth(params.month);
 		if (parsed === null) error(404, 'この月のファイルがありません');
 		const { version, ...body } = parsed;
-		return json(body, { headers: { etag: toEtag(version) } });
+		return Response.json(body, { headers: { etag: toEtag(version) } });
 	} catch (e) {
 		// 構文エラーは利用者が直すもの。パーサのメッセージをそのまま渡す
 		if (e instanceof MonthSyntaxError) error(422, e.message);
